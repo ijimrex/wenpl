@@ -17,11 +17,19 @@ def divide(str):
     return li
 
 def filt(li,type):
+	rli=[]
+	for w in li:
+
+		if w[1]==type:
+
+			rli.append(w[0])
+	return rli
 
 
-def compare(li,store):
+# def compare(li,store):
 
 
 a=divide(sentence)
-print a
+b=filt(a,'v')
+print 
 
