@@ -8,7 +8,7 @@ dictionary={"温度":"温度","机房":"机房","房间":"机房","室内":"机�
 
 st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-sentence="我要查询机房的湿度，但是也想看"
+sentence="我要查询机房的湿度"
 
 def divide(str):
 	#return the unicode format result
@@ -38,6 +38,8 @@ def getQueryTypeSet(li,dictionary):
 		word=w[0]
 		if dictionary.has_key(word):
 			qType.append(word)
+	if len(qType)==0:
+		return 0 		
 	setType=set(qType)
 	# print setType
 	return setType
@@ -74,13 +76,17 @@ def excuteREST(p,st):
 	return st[p[0][0]]
 
 
-a=divide(sentence)
-b=getQueryTypeSet(a,dictionary)
-c=getPrefixHit(b,st)
-d=ranking(c,b)
-e=excuteREST(d,st)
+divideResult=divide(sentence)
+sentenceResult=getQueryTypeSet(divideResult,dictionary)
+if sentenceResult==0:
+	print ""
+	print excuteResult
+else:
+	hitResult=getPrefixHit(sentenceResult,st)
 
-# b=filt(a,'v')
-
-print e
+	rankResult=ranking(hitResult,sentenceResult)
+	excuteResult=excuteREST(rankResult,st)
+	# b=filt(a,'v')
+	print ""
+	print excuteResult
 
