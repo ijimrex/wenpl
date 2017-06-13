@@ -8,7 +8,7 @@ dictionary={"温度":"温度","机房":"机房","房间":"机房","室内":"机�
 
 st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-sentence="我要查询机房的湿度"
+sentence="开门"
 
 def divide(str):
 	#return the unicode format result
@@ -80,7 +80,7 @@ divideResult=divide(sentence)
 sentenceResult=getQueryTypeSet(divideResult,dictionary)
 if sentenceResult==0:
 	print ""
-	print excuteResult
+	print "Cannot find a solution"
 else:
 	hitResult=getPrefixHit(sentenceResult,st)
 
