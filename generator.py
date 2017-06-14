@@ -1,3 +1,7 @@
+'''
+Author:Lei Jin
+
+'''
 import urllib2  
 import json 
 
@@ -71,7 +75,7 @@ def getDevice(data):
 
 
 def writeData(list,type):
-	url='./dict/'+type+'.json'
+	url='../wendata/dict/'+type+'.json'
 	fout=open(url,'w+')
 	for item in list:
 		fout.write(item+'\n')
@@ -94,7 +98,7 @@ def getAll(data):
 	
 
 
-jsonData= getJSON("./hierarchy_elements.json")
+jsonData= getJSON("../wendata/hierarchy_elements.json")
 getAll(jsonData)
 
 
