@@ -1,16 +1,19 @@
 #encoding=utf-8
 import jieba.posseg as pseg
+import jieba
 import sys
 import urllib2  
 import json  
+
+jieba.load_userdict('../wendata/dict/device.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-dictionary={"温度":"温度","机房":"机房","房间":"机房","室内":"机房","查询":"查询","看看":"查询","看一看":"查询","检查":"查询","湿度":"湿度","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
-
+dictionary={"情况":"","温度":"温度","机房":"机房","局站":"机房","房间":"机房","室内":"机房","查询":"查询","看看":"查询","看一看":"查询","告诉":"查询","检查":"查询","湿度":"湿度","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
+dic_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在"}
 st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-sentence=""
+sentence="查看环境02的问题"
 
 def divide(str):
 	#return the unicode format result
@@ -82,12 +85,25 @@ def excuteREST(p,st):
 def getDict(url):
 	try:
 		data = open(url,"r+").read()
-		print data
+		# print data
 		return data
 	except Exception as e:
 		print e
 
-print getDict("./hierarchy_elements.json")
+def getResult():
+    turl='../wendata/token'  
+    qurl='../wendata/urls'
+    fin1=open(turl,'r+')
+    fin2=open(qurl,'r+')
+    token=fin1.read()
+    url=fin2.read()
+    req=urllib2.Request(url)
+    req.add_header('authorization',token)
+    response = urllib2.urlopen(req)
+    print response.read()
+
+getResult()
+
 
 
 divideResult=divide(sentence)

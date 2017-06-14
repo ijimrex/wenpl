@@ -75,7 +75,7 @@ def getDevice(data):
 
 
 def writeData(list,type):
-	url='../wendata/dict/'+type+'.json'
+	url='../wendata/dict/'+type+'.txt'
 	fout=open(url,'w+')
 	for item in list:
 		fout.write(item+'\n')
