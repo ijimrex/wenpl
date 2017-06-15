@@ -8,17 +8,19 @@ jieba.load_userdict('../wendata/dict/device.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-dictionary={"情况":"情况","状况":"情况","状态":"情况","样子":"情况","温度":"温度","机房":"机房","局站":"机房","房间":"机房","室内":"机房","查询":"查询","看看":"查询","看一看":"查询","显示":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
-dic_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在"}
+general={"情况":"情况","状况":"情况","状态":"情况","样子":"情况","温度":"温度","查询":"查询","看看":"查询","看一看":"查询","显示":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度"}
+pro={"机房":"机房","局站":"机房","房间":"机房","室内":"机房","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
+dict_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在"}
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
+sentence="看下杭州市设备的情况"
 
-sentence="看下机房情况"
+
 def getStore():
 	store={}
 	surl="../wendata/store.json"
 	fin=open(surl,'r+')
 	line = fin.readline()
-	# print line
+
 	while line:
 		j = json.loads(line)
 		store[j.keys()[0].encode('utf-8')]=j[j.keys()[0]]
@@ -28,6 +30,15 @@ def getStore():
 	fin.close()
 	return store
 
+def getParents():
+	parents={}
+	purl="../wendata/dict/parent.txt"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	parents=toUTF8(jp)
+	# print parents
+	return parents
 
 
 def divide(str):
@@ -51,13 +62,16 @@ def filt(li,type):
 	return rli
 
 
+
 def getQueryTypeSet(li,dictionary):
 	#calculate the types of the query words
 	qType=[]
+	# print dictionary
 	for w in li:
 		word=w[0]
 		if dictionary.has_key(word):
 			qType.append(dictionary[word])
+			# print dictionary[word]
 	if len(qType)==0:
 		return 0 		
 	setType=set(qType)
@@ -79,7 +93,6 @@ def getPrefixHit(setType,store):
 
 	# print count
 	return count
-
 
 def ranking(count,setType):
 	#calculate the probability
@@ -108,7 +121,7 @@ def excuteREST(p,st):
 def getDict(url):
 	try:
 		data = open(url,"r+").read()
-		# print data
+		print data
 		return data
 	except Exception as e:
 		print e
@@ -127,6 +140,7 @@ def getDict(url):
 #     fin2.close()
 #     # print response.read()
 #     return response.read()
+
 def getResult(url):
     turl='../wendata/token'  
     fin1=open(turl,'r+')
@@ -147,15 +161,26 @@ def connectTuring(a):
 	reson = urllib2.urlopen(url)       
 	reson = json.loads(reson.read())  
 	fin.close()
-
 	# print reson['text'],'\n'
 	return reson['text']        
 
+def toUTF8(origin):
+	#change unicode type dict to UTF-8
+	result={}
+	for x in origin.keys():
+		val=origin[x].encode('utf-8')
+		x=x.encode('utf-8')
+		result[x]=val
+	return result
 
 
 
+parents=getParents()
 
-st=getStore()#dict
+dic=dict(parents, **general)
+dictionary=dict(dic, **pro)
+# print dictionary
+st=getStore()#store dict
 divideResult=divide(sentence)#list
 sentenceResult=getQueryTypeSet(divideResult,dictionary)#set
 # print sentenceResult

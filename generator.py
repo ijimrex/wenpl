@@ -79,6 +79,24 @@ def writeData(list,type):
 	fout=open(url,'w+')
 	for item in list:
 		fout.write(item+'\n')
+	fout.close()
+
+
+
+def writePros(l):
+	string="{"
+	for x in l:
+		for y in x:
+			
+			string+='\"'+y+'\"'+': \"parent\",'
+	string=string[:-1]
+	string+="}"
+	print string
+	url='../wendata/dict/parent.txt'
+	fout=open(url,'w+')
+	fout.write(string)
+	fout.close()
+
 
 
 
@@ -90,6 +108,7 @@ def getAll(data):
 	towns=getTown(data)
 	stations=getStation(data)
 	devices=getDevice(data)
+	writePros([cities,towns,stations])
 	writeData(names,'name')
 	writeData(cities,'city')
 	writeData(towns,'town')
