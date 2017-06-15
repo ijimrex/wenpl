@@ -9,11 +9,11 @@ jieba.load_userdict('../wendata/dict/device.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-dictionary={"情况":"","温度":"温度","机房":"机房","局站":"机房","房间":"机房","室内":"机房","查询":"查询","看看":"查询","看一看":"查询","告诉":"查询","检查":"查询","湿度":"湿度","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
+dictionary={"情况":"","温度":"温度","机房":"机房","局站":"机房","房间":"机房","室内":"机房","查询":"查询","看看":"查询","看一看":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急"}
 dic_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在"}
 st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-sentence="查看环境02的问题"
+sentence=""
 
 def divide(str):
 	#return the unicode format result
@@ -52,6 +52,7 @@ def getQueryTypeSet(li,dictionary):
 def getPrefixHit(setType,store):
 	#calculate the hit times of each prefix sentences in store 
 	count={}
+	# isZero=True
 	for i in range(len(store.keys())):
 		# print store.keys()[i]
 		setStore=set(store.keys()[i].split(' '))
@@ -59,9 +60,12 @@ def getPrefixHit(setType,store):
 		# print setStore
 		# print store
 		# print setStore&setType
+	
 		count[store.keys()[i]]=len(setStore&setType)
+
 	# print count
 	return count
+
 
 def ranking(count,setType):
 	#calculate the probability
@@ -102,7 +106,18 @@ def getResult():
     response = urllib2.urlopen(req)
     print response.read()
 
-getResult()
+def connectTuring(a):
+	kurl='../wendata/turkey'
+	fin=open(kurl,'r+')
+	key=fin.read()
+	url = r'http://www.tuling123.com/openapi/api?key='+key+'&info='+a  
+	reson = urllib2.urlopen(url)       
+	reson = json.loads(reson.read())  
+	print reson['text'],'\n'              
+
+# getResult()
+
+
 
 
 
@@ -110,7 +125,7 @@ divideResult=divide(sentence)
 sentenceResult=getQueryTypeSet(divideResult,dictionary)
 if sentenceResult==0:
 	print ""
-	print "Cannot find a solution"
+	connectTuring(sentence)
 else:
 	hitResult=getPrefixHit(sentenceResult,st)
 
