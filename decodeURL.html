@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DecodeURI</title>
+</head>
+
+<body>
+<input id='in' type="text" name="in" style="width:500px;height: 30px">
+<button id='c'style="height: 30px">decode</button>
+<div id='out' style="margin: 50px 50px 50px 50px;font-size: 15px"></div>
+
+</body>
+<script type="text/javascript">
+document.getElementById('c').addEventListener('click',ck)
+function ck(){
+var ins=document.getElementById('in').value
+document.getElementById('out').innerHTML=decodeURI(ins)}
+	
+</script>
+</html>
