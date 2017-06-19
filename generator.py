@@ -86,13 +86,12 @@ def writeData(list,type):
 def writePros(l):
 	string="{"
 	for x in l:
-		for y in x:
-			
-			string+='\"'+y+'\"'+': \"parent\",'
+		for y in x:			
+			string+='\"'+y+'\"'+': \"position\",'
 	string=string[:-1]
 	string+="}"
 	print string
-	url='../wendata/dict/parent.txt'
+	url='../wendata/dict/position.txt'
 	fout=open(url,'w+')
 	fout.write(string)
 	fout.close()

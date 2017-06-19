@@ -8,9 +8,9 @@ jieba.load_userdict('../wendata/dict/device.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-general={"情况":"情况","状况":"情况","状态":"情况","样子":"情况","温度":"温度","查询":"查询","看看":"查询","看一看":"查询","显示":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度","全部":"全部","所有":"全部","位置":"位置","地理位置":"位置"}
-pro={"机房":"监控点","局站":"局站","房间":"监控点","室内":"监控点","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急","设备":"设备","机器":"设备","设施":"设备","类型":"类型","种类":"类型"}
-dict_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在"}
+general={"关系":"关系","关联":"关系","情况":"情况","状况":"情况","状态":"情况","样子":"情况","温度":"温度","查询":"查询","看看":"查询","看一看":"查询","显示":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度","全部":"全部","所有":"全部","位置":"位置","地理位置":"位置"}
+pro={"员工":"员工","工作人员":"员工","工人":"员工","采集":"采集","操作":"操作","工作":"操作","日志":"日志","记录":"日志","演练":"演练","演习":"演练","预演":"演练","机房":"采集点","房间":"采集点","室内":"采集点","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急","设备":"设备","机器":"设备","设施":"设备","类型":"类型","种类":"类型"}
+dict_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在","历史":"历史","过往":"历史","过去":"历史","曾经":"历史","从前":"历史"}
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
 
@@ -30,15 +30,15 @@ def getStore():
 	fin.close()
 	return store
 
-def getParents():
-	parents={}
-	purl="../wendata/dict/parent.txt"
+def getPositions():
+	positions={}
+	purl="../wendata/dict/position.txt"
 	fin=open(purl,'r+')
 	p=fin.read()
 	jp=json.loads(p)
-	parents=toUTF8(jp)
-	# print parents
-	return parents
+	positions=toUTF8(jp)
+	# print positions
+	return positions
 
 def divide(str):
 	#return the unicode format result
@@ -46,7 +46,7 @@ def divide(str):
     li=[]
 
     for w in words:
-    	# print w.word
+    	print w.word
     	# print w.flag
     	li.append([w.word.encode('utf-8'),w.flag.encode('utf-8')])
     return li
@@ -119,20 +119,20 @@ def revranking(count):
 	for x in count.keys():
 		p[x]=float(count[x]/float(len(x)))
 	p=sort(p)
-	return p
+	return p.keys()
 
 
-def excuteREST(p,st,para):
+def excuteREST(p,rp,st,para):
 	# print p
 	#p[[[],[]],[]]
 	#st{:}
-	# print p
+
 	turl='../wendata/token' 
 	fin1=open(turl,'r+')
 	token=fin1.read()
 	url=st[p[0][0]]
 	if len(para)!=0:
-		url+para[0]
+		url+=para[0]
 	# print url
 	return getResult(url)
 
@@ -164,13 +164,14 @@ def getResult(url):
     fin1=open(turl,'r+')
     token=fin1.read()
     url='http://www.intellense.com:3080'+url
+    print url
     req=urllib2.Request(url)
     req.add_header('authorization',token)
-    response = urllib2.urlopen(req)
+    # response = urllib2.urlopen(req)
     fin1.close()
     # print response.read()
-    # return url
-    return response.read()
+    return url
+    # return response.read()
 
 def connectTuring(a):
 	kurl='../wendata/turkey'
@@ -192,9 +193,10 @@ def toUTF8(origin):
 		result[x]=val
 	return result
 
-sentence="杭州有哪些设备"
 
-parents=getParents()
+sentence="查询所有的操作日志"
+
+parents=getPositions()
 dic=dict(parents, **pro)
 dictionary=dict(dic, **general)
 # print dictionary
@@ -215,7 +217,7 @@ else:
 	rankResult=ranking(hitResult,sentenceResult)#dict
 	rerankingResult=revranking(hitResult)
 	# print rerankingResult
-	excuteResult=excuteREST(rankResult,st,para)
+	excuteResult=excuteREST(rankResult,rerankingResult,st,para)
 	# b=filt(a,'v')
 	print ""
 	print excuteResult
