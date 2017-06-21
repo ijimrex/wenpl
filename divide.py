@@ -3,14 +3,12 @@ import jieba.posseg as pseg
 import jieba
 import sys
 import urllib2  
-import json  
-jieba.load_userdict('../wendata/dict/device.txt')
+import json 
+import re 
+jieba.load_userdict('../wendata/dict/dict.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-general={"关系":"关系","关联":"关系","情况":"情况","状况":"情况","状态":"情况","样子":"情况","温度":"温度","查询":"查询","看看":"查询","看一看":"查询","显示":"查询","告诉":"查询","检查":"查询","查看":"查询","湿度":"湿度","全部":"全部","所有":"全部","位置":"位置","地理位置":"位置"}
-pro={"员工":"员工","工作人员":"员工","工人":"员工","采集":"采集","操作":"操作","工作":"操作","日志":"日志","记录":"日志","演练":"演练","演习":"演练","预演":"演练","机房":"采集点","房间":"采集点","室内":"采集点","坏掉":"损坏","报警":"报警","告警":"报警","警报":"报警","一般":"一般","严重":"严重","紧急":"紧急","设备":"设备","机器":"设备","设施":"设备","类型":"类型","种类":"类型"}
-dict_time={"昨天":"昨天","昨日":"昨天","昨儿":"昨天","今天":"今天","今日":"今天","今日":"今天","今儿":"今天","现在":"现在","此刻":"现在","此时":"现在","实时":"现在","当下":"现在","历史":"历史","过往":"历史","过去":"历史","曾经":"历史","从前":"历史"}
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
 
@@ -25,20 +23,61 @@ def getStore():
 		j = json.loads(line)
 		store[j.keys()[0].encode('utf-8')]=j[j.keys()[0]]
 		line = fin.readline()
-		# print data
 	# print store
 	fin.close()
 	return store
 
-def getPositions():
+def mergePositions(l):
 	positions={}
-	purl="../wendata/dict/position.txt"
+	for x in l:
+		for y in x:
+			positions[y]='position'
+	# purl="../wendata/dict/position.txt"
+	# fin=open(purl,'r+')
+	# p=fin.read()
+	# jp=json.loads(p)
+	# positions=toUTF8(jp)
+	# print positions
+	return positions
+
+def getPosition(type):
+	purl="../wendata/dict/"+type+".json"
 	fin=open(purl,'r+')
 	p=fin.read()
 	jp=json.loads(p)
-	positions=toUTF8(jp)
+	pros=toUTF8(jp)
 	# print positions
-	return positions
+	return pros
+
+def getPros():
+	pros={}
+	purl="../wendata/dict/pro.json"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	pros=toUTF8(jp)
+	# print positions
+	return pros
+
+def getGenerals():
+	generals={}
+	purl="../wendata/dict/general.json"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	generals=toUTF8(jp)
+	# print generals
+	return generals
+
+def getPeople():
+	people={}
+	purl="../wendata/dict/people.json"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	people=toUTF8(jp)
+	# print generals
+	return people
 
 def divide(str):
 	#return the unicode format result
@@ -46,11 +85,10 @@ def divide(str):
     li=[]
 
     for w in words:
-    	print w.word
+    	# print w.word
     	# print w.flag
     	li.append([w.word.encode('utf-8'),w.flag.encode('utf-8')])
     return li
-
 
 def filt(li,type):
 	#get the specific words depending on the type you want
@@ -60,8 +98,23 @@ def filt(li,type):
 			rli.append(w[0])
 	return rli
 
-def getQueryTypeSet(li,dictionary,para,keyphrase):
+def paraFilter(store):
+	for x in store.keys():
+		for y in x.split(" "):
+			t=re.match( r'\w', y)
+			if t!=None:
+				
+
+
+
+
+
+
+
+
+def getQueryTypeSet(li,dictionary,para,pro,paraCategory):
 	#calculate the types of the query words
+	# showp()
 	qType=[]
 	Nkey=0
 	# print dictionary
@@ -69,10 +122,12 @@ def getQueryTypeSet(li,dictionary,para,keyphrase):
 		word=w[0]
 		if dictionary.has_key(word):
 			qType.append(dictionary[word])
-			if keyphrase.has_key(word):
+			if pro.has_key(word):
 				Nkey+=1
+			if paraCategory.has_key(word):
 				para.append(word)
 			# print dictionary[word]
+	# print qType
 	# print Nkey
 	if Nkey==0:
 		return 0 		
@@ -114,19 +169,20 @@ def sort(p):
 	# print dicts
 
 def revranking(count):
-
+	# showDict(count)
 	p={}
 	for x in count.keys():
-		p[x]=float(count[x]/float(len(x)))
+		p[x]=float(count[x]/float(len(x.split(" "))))
+	# showDict(p)
 	p=sort(p)
-	return p.keys()
+	# print p
+	return p
 
 
 def excuteREST(p,rp,st,para):
 	# print p
 	#p[[[],[]],[]]
 	#st{:}
-
 	turl='../wendata/token' 
 	fin1=open(turl,'r+')
 	token=fin1.read()
@@ -160,6 +216,7 @@ def getDict(url):
 #     return response.read()
 
 def getResult(url):
+    print url
     turl='../wendata/token'  
     fin1=open(turl,'r+')
     token=fin1.read()
@@ -167,7 +224,7 @@ def getResult(url):
     print url
     req=urllib2.Request(url)
     req.add_header('authorization',token)
-    # response = urllib2.urlopen(req)
+    response = urllib2.urlopen(req)
     fin1.close()
     # print response.read()
     return url
@@ -192,20 +249,34 @@ def toUTF8(origin):
 		x=x.encode('utf-8')
 		result[x]=val
 	return result
+def showDict(l):
+	for x in l.keys():
+		print x+' '+str(l[x])
+def showList(l):
+	for x in l:
+		print l
 
-
-sentence="查询所有的操作日志"
-
-parents=getPositions()
-dic=dict(parents, **pro)
-dictionary=dict(dic, **general)
-# print dictionary
+sentence="查询 杭州市 报警"#todo：需要预处理一下，去掉空格和无意义符号
+sentence=sentence.replace(' ', '')
+people=getPeople()
+cities=getPosition('cities')
+towns=getPosition('towns')
+stations=getPosition('stations')
+devices=getPosition('devices')
+positions=mergePositions([cities,towns,stations,devices])
+pro=getPros()
+general=getGenerals()
+paraCategory=dict(positions,**people)
+dict1=dict(general, **pro)
+dict2=dict(dict1, **paraCategory)
 st=getStore()#store dict
 para=[]
 keyphrase=pro.keys()
-keyphrase.append(parents)
+paraFilter(st)
+# keyphrase.append(positions.keys())
 divideResult=divide(sentence)#list
-sentenceResult=getQueryTypeSet(divideResult,dictionary,para,dic)#set
+sentenceResult=getQueryTypeSet(divideResult,dict2,para,pro,paraCategory)#set
+
 # print sentenceResult
 
 
@@ -216,6 +287,7 @@ else:
 	hitResult=getPrefixHit(sentenceResult,st)#dict
 	rankResult=ranking(hitResult,sentenceResult)#dict
 	rerankingResult=revranking(hitResult)
+	# showList(rankResult)
 	# print rerankingResult
 	excuteResult=excuteREST(rankResult,rerankingResult,st,para)
 	# b=filt(a,'v')
