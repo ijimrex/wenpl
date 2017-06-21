@@ -13,7 +13,15 @@ sys.setdefaultencoding('utf-8')
 
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-
+def getDate():
+	times={}
+	purl="../wendata/dict/time.json"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	times=toUTF8(jp)
+	# print positions
+	return times
 
 def getStore():
 	store={}
@@ -223,11 +231,11 @@ def getResult(url):
     # print url
     req=urllib2.Request(url)
     req.add_header('authorization',token)
-    # response = urllib2.urlopen(req)
+    response = urllib2.urlopen(req)
     fin1.close()
     # print response.read()
-    return url
-    # return response.read()
+    # return url
+    return response.read()
 def resort(l1,l2):
 	# 反向检查匹配度
 	# print l2
@@ -297,7 +305,7 @@ def showList(l):
 #     fin2.close()
 #     # print response.read()
 #     return response.read()
-sentence="查看设备类型"#todo：需要预处理一下，去掉空格和无意义符号
+sentence="查看的数据"#todo：需要预处理一下，去掉空格和无意义符号
 sentence=sentence.replace(' ', '')
 people=getPeople()
 cities=getPosition('cities')
