@@ -6,6 +6,8 @@ import urllib2
 import json 
 import re 
 import copy
+import datetime
+import time
 jieba.load_userdict('../wendata/dict/dict.txt')
 jieba.load_userdict('../wendata/dict/dict_manual.txt')
 jieba.load_userdict('../wendata/dict/dict_date.txt')
@@ -15,13 +17,89 @@ sys.setdefaultencoding('utf-8')
 
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-def getDate(string):
+def parseDate(string):
+	preDate=getDate()
+	word=None
+	endTime=str(datetime.datetime.now())+'Z'
+	for key in preDate.keys():
+		word=re.match(key, sentence)
+		if word:
+			break
+	if word!=None and preDate[word.group()]=='现在':
+		endTime=str(datetime.datetime.now())+'Z'
+		# print endTime
+	# print isVaildDate('2017-6-30 14:00:00')
+	#用户输入时间转成系统时间
+	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', sentence)
+	if match !=[]:
+		if len(match)==1:
+			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+			if isVaildDate(tempStartTime):
+				startTime=tempStartTime+'Z'
+			else:
+				return 'timeError'
+		if len(match)==2:
+			# print match
+			if int(match[0][0])<int(match[1][0]) or int(match[0][1])<int(match[1][1]) or int(match[0][2])<int(match[1][2]) or int(match[0][3])<int(match[1][3]):
+				tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+				tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
+			else:
+				endTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+				startTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
+
+			if isVaildDate(tempStartTime):
+				startTime=tempStartTime+'Z'
+			else:
+				return 'timeError'
+			if isVaildDate(tempEndTime):
+				endTime=tempEndTime+'Z'
+			else:
+				return 'timeError'
+		print [startTime,endTime]
+		return[startTime,endTime]
+
 	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence)
-	# print 'date'
-	# print match
-	return match
+	if match !=[]:
+		if len(match)==1:
+			startTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+"00:00:00"
+		if len(match)==2:
+			# print match
+			if int(match[0][0])<int(match[1][0]) or int(match[0][1])<int(match[1][1]) or int(match[0][2])<int(match[1][2]) or int(match[0][3])<int(match[1][3]):
+				startTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+				endTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":59:59"
+			else:
+				endTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":59:59"
+				startTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
+			if isVaildDate(tempStartTime):
+				startTime=tempStartTime+'Z'
+			else:
+				return 'timeError'
+			if isVaildDate(tempEndTime):
+				endTime=tempEndTime+'Z'
+			else:
+				return 'timeError'
+		return[startTime,endTime]
 
 
+
+
+	# if 
+
+# print 'date'
+	# print startTime
+	# return match
+	# print ((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M"))
+
+
+def getDate():
+	pros={}
+	purl="../wendata/dict/time.json"
+	fin=open(purl,'r+')
+	p=fin.read()
+	jp=json.loads(p)
+	pros=toUTF8(jp)
+	# print positions
+	return pros
 
 def getStore():
 	store={}
@@ -95,7 +173,7 @@ def divide(str):
     li=[]
 
     for w in words:
-    	print w.word
+    	# print w.word
     	# print w.flag
     	li.append([w.word.encode('utf-8'),w.flag.encode('utf-8')])
     return li
@@ -287,10 +365,16 @@ def resort(l1,l2):
 		for x in sublist:
 			newlist.append(x[0])
 	return newlist
+def isVaildDate(date):
+    try:
+        if ":" in date:
+            time.strptime(date, "%Y-%m-%d %H:%M:%S")
+        else:
+            time.strptime(date, "%Y-%m-%d")
+        return True
+    except:
+        return False 
 
-
-
-	return l1
 def writeData(list):
 	url='test.txt'
 	fout=open(url,'w+')
@@ -342,7 +426,7 @@ def showList(l):
 #     fin2.close()
 #     # print response.read()
 #     return response.read()
-sentence="查询余文乐的未读通知"#todo：需要预处理一下，去掉空格和无意义符号
+sentence="2017年2月10日到2017年5月20日14点"#todo：需要预处理一下，去掉空格和无意义符号
 sentence=sentence.replace(' ', '')
 people=getPeople()
 cities=getPosition('cities')
@@ -360,14 +444,14 @@ st=getStore()#store dict
 para=[]
 keyphrase=pro.keys()
 paraDict=paraFilter(st)
-date=getDate(sentence)
+date=parseDate(sentence)
 # print 'dic' 
 # print paraDict
 # keyphrase.append(positions.keys())
 divideResult=divide(sentence)#list
 sentenceResult=getQueryTypeSet(divideResult,dict2,para,pro,paraCategory)#set
 # print para
-print sentenceResult
+# print sentenceResult
 
 
 if sentenceResult==0:
