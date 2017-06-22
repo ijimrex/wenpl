@@ -8,20 +8,20 @@ import re
 import copy
 jieba.load_userdict('../wendata/dict/dict.txt')
 jieba.load_userdict('../wendata/dict/dict_manual.txt')
+jieba.load_userdict('../wendata/dict/dict_date.txt')
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-def getDate():
-	times={}
-	purl="../wendata/dict/time.json"
-	fin=open(purl,'r+')
-	p=fin.read()
-	jp=json.loads(p)
-	times=toUTF8(jp)
-	# print positions
-	return times
+def getDate(string):
+	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence)
+	# print 'date'
+	# print match
+	return match
+
+
 
 def getStore():
 	store={}
@@ -142,12 +142,12 @@ def getQueryTypeSet(li,dictionary,para,pro,paraCategory):
 		para.append(x)
 	if Nkey==0:
 		return 0 		
-	setType=set(qType)
-	return setType
+	return qType
 
-def getPrefixHit(setType,store):
+def getPrefixHit(qType,store):
 	#calculate the hit times of each prefix sentences in store 
 	count={}
+	setType=set(qType)
 	# print store
 	# isZero=True
 	for i in range(len(store.keys())):
@@ -162,8 +162,9 @@ def getPrefixHit(setType,store):
 	# print count
 	return count
 
-def ranking(count,setType):
+def ranking(count,qType):
 	#calculate the probability
+	setType=set(qType)
 	N=len(setType)
 	p={}
 	for x in count.keys():
@@ -188,7 +189,7 @@ def revranking(count):
 	return p
 
 
-def excuteREST(p,rp,st,para,paraDict):
+def excuteREST(p,rp,st,para,paraDict,qType):
 	#p:正排序后的store匹配度列表
 	#rp:反排序后的store匹配度列表
 	#st:store字典 
@@ -198,7 +199,8 @@ def excuteREST(p,rp,st,para,paraDict):
 	#p[[[],[]],[]]
 	#st{:}
 	p=resort(p,rp)
-	print p[0][0]
+	# print p
+	writeData(p)
 	if len(para)==0:
 		for x in p:
 			if len(paraDict[x[0]])==0:
@@ -207,8 +209,13 @@ def excuteREST(p,rp,st,para,paraDict):
 	elif len(para)==1:
 		for x in p:
 			if len(paraDict[x[0]])==1:
-				url=st[x[0]]+para[0]
-				break
+				print 'insadsasas'
+				print paraDict[x[0]][0][0]
+				print qType
+				if qType.count(paraDict[x[0]][0][0])==1:
+					print 'ok'
+					url=st[x[0]]+para[0]
+					break
 	else:
 		for x in p:
 			if len(paraDict[x[0]])==2:
@@ -218,7 +225,7 @@ def excuteREST(p,rp,st,para,paraDict):
 	# url=st[p[0][0]]
 	# if len(para)!=0:
 	# 	url+=para[0]
-	# print url
+	
 	return getResult(url)
 
 
@@ -231,35 +238,65 @@ def getResult(url):
     # print url
     req=urllib2.Request(url)
     req.add_header('authorization',token)
-    response = urllib2.urlopen(req)
+    # response = urllib2.urlopen(req)
     fin1.close()
     # print response.read()
-    # return url
+    return url
     return response.read()
 def resort(l1,l2):
 	# 反向检查匹配度
 	# print l2
 	l1=copy.deepcopy(l1)
 	l2=copy.deepcopy(l2)
-	for x in range(len(l1)-1):
-		if l1[x][1]==l1[x+1][1]:
-			for y in range(len(l2)-1):
-				if l2[y][0]==l1[x][0]:
+	# print l1
+	# print l2
+	# for x in range(len(l1)-1):
+	# 	if l1[x][1]==l1[x+1][1]:
+	# 		for y in range(len(l2)-1):
+	# 			if l2[y][0]==l1[x][0]:
+	# 				break
+	# 		for z in range(len(l2)):
+	# 			if l2[z][0]==l1[x+1][0]:
+	# 				break
+	# 		print y 
+	# 		print z
+	# 		if y>z:
+	# 			temp=copy.deepcopy(l1[x+1])
+	# 			l1[x+1]=copy.deepcopy(l1[x])
+	# 			l1[x]=copy.deepcopy(temp)
+	nl=[]
+	g=-1
+	group=-1
+	gdict={}
+	newlist=[]
+	for x in l1:
+		if g!=x[1]:
+			group+=1
+			g=x[1]
+			nl.append([])
+			nl[group].append(x)
+		else:
+			nl[group].append(x)
+	for g in nl:
+		for x in g:
+			for y in range(len(l2)):
+				if x[0]==l1[y][0]:
+					gdict[x]=y
 					break
-			for z in range(len(l2)):
-				if l2[z][0]==l1[x+1][0]:
-					break
-			# print y 
-			# print z
-			if y>z:
-				temp=copy.deepcopy(l1[x+1])
-				l1[x+1]=copy.deepcopy(l1[x])
-				l1[x]=copy.deepcopy(temp)
+		sublist=sort(gdict)
+		for x in sublist:
+			newlist.append(x[0])
+	return newlist
+
+
+
 	return l1
-
-
-
-
+def writeData(list):
+	url='test.txt'
+	fout=open(url,'w+')
+	for item in list:
+		fout.write(item[0]+" "+str(item[1])+'\n')
+	fout.close()
 def connectTuring(a):
 	kurl='../wendata/turkey'
 	fin=open(kurl,'r+')
@@ -305,7 +342,7 @@ def showList(l):
 #     fin2.close()
 #     # print response.read()
 #     return response.read()
-sentence="查看的数据"#todo：需要预处理一下，去掉空格和无意义符号
+sentence="查询余文乐的未读通知"#todo：需要预处理一下，去掉空格和无意义符号
 sentence=sentence.replace(' ', '')
 people=getPeople()
 cities=getPosition('cities')
@@ -319,17 +356,18 @@ paraCategory=dict(positions,**people)
 dict1=dict(general, **pro)
 dict2=dict(dict1, **paraCategory)
 st=getStore()#store dict
+# print st
 para=[]
 keyphrase=pro.keys()
-# print st
 paraDict=paraFilter(st)
+date=getDate(sentence)
 # print 'dic' 
 # print paraDict
 # keyphrase.append(positions.keys())
 divideResult=divide(sentence)#list
 sentenceResult=getQueryTypeSet(divideResult,dict2,para,pro,paraCategory)#set
 # print para
-# print sentenceResult
+print sentenceResult
 
 
 if sentenceResult==0:
@@ -339,9 +377,10 @@ else:
 	hitResult=getPrefixHit(sentenceResult,st)#dict
 	rankResult=ranking(hitResult,sentenceResult)#dict
 	rerankingResult=revranking(hitResult)
+	# print rankResult
 	# showList(rankResult)
 	# print rerankingResult
-	excuteResult=excuteREST(rankResult,rerankingResult,st,para,paraDict)
+	excuteResult=excuteREST(rankResult,rerankingResult,st,para,paraDict,sentenceResult)
 	# b=filt(a,'v')
 	print ""
 	print excuteResult
