@@ -17,13 +17,13 @@ sys.setdefaultencoding('utf-8')
 
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
-sentence="查询2017年2月10日到2017年5月20日的信息"#todo：需要预处理一下，去掉空格和无意义符号
+sentence="查询7月10日5点到2017年5月20日11点"#todo：需要预处理一下，去掉空格和无意义符号
 sentence=sentence.replace(' ', '')
 def parseDate(string):
 	preDate=getDate()
 	word=None
-	
 	tl=[]
+	tag=""
 	tl.append(str(datetime.datetime.now()))
 	for key in preDate.keys():
 		word=re.match(key, sentence)
@@ -35,55 +35,126 @@ def parseDate(string):
 
 	#用户输入时间转成系统时间
 	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', sentence)
+	if match !=[]:
+		for x in range(len(match)):
+			tempStartTime=match[x][0]+'-'+match[x][1]+'-'+match[x][2]+" "+match[x][3]+":00:00"
+			if isVaildDate(tempStartTime):
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
+				tag="ymdh"
+			else:
+				return 'timeError'
+		
+	sentence1 = re.sub(r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', "", sentence)
+	
+
+	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence1)
 	# print match
 	if match !=[]:
-		if len(match)==1:
-			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+		for x in range(len(match)):
+			tempStartTime=match[x][0]+'-'+match[x][1]+'-'+match[x][2]+" 00:00:00"
+			print tempStartTime
 			if isVaildDate(tempStartTime):
 				# startTime=tempStartTime+'Z'
 				tl.append(tempStartTime)
-			else:
-				return 'timeError'
-		if len(match)==2:
-			# print match
-			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
-			tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
-			if isVaildDate(tempStartTime):
-				# startTime=tempStartTime+'Z'
-				tl.append(tempStartTime)
-			else:
-				return 'timeError'
-			if isVaildDate(tempEndTime):
-				# endTime=tempEndTime+'Z'
-				tl.append(tempEndTime)
+				tag="ymd"
 			else:
 				return 'timeError'
 
-	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日\D+', sentence)
+	sentence2 = re.sub(r'(\d{4})年(\d{1,2})月(\d{1,2})日', "", sentence1)
+	match = re.findall( r'(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', sentence2)
 	print match
+	today= datetime.date.today()
+	today=str(today).split('-')
+
 	if match !=[]:
-		if len(match)==1:
-			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" 00:00:00"
+		for x in range(len(match)):
+			j1=int(today[1])*100+int(today[2])
+			j2=int(match[x][0])*100+int(match[x][1])
+			# print j2
+			if j1<j2:
+				tempStartTime=str(int(today[0])-1)+'-'+match[x][0]+'-'+match[x][1]+" "+match[x][2]+":00:00"
+			else:
+				tempStartTime=today[0]+'-'+match[x][0]+'-'+match[x][1]+" "+match[x][2]+":00:00"
+			print tempStartTime
+			if isVaildDate(tempStartTime):
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
+				tag="mdh"
+			else:
+				return 'timeError'
+	sentence3 = re.sub(r'(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', "", sentence2)
+	match = re.findall( r'(\d{1,2})月(\d{1,2})日', sentence3)
+	# print match
+	today= datetime.date.today()
+	today=str(today).split('-')
+
+	if match !=[]:
+		for x in range(len(match)):
+			j1=int(today[1])*100+int(today[2])
+			j2=int(match[x][0])*100+int(match[x][1])
+			print j2
+			if j1<j2:
+				tempStartTime=str(int(today[0])-1)+'-'+match[x][0]+'-'+match[x][1]+ " 00:00:00"
+			else:
+				tempStartTime=today[0]+'-'+match[x][0]+'-'+match[x][1]+" 00:00:00"
+			print tempStartTime
+			if isVaildDate(tempStartTime):
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
+				tag="md"
+			else:
+				return 'timeError'
+	sentence4 = re.sub(r'(\d{1,2})月(\d{1,2})日', "", sentence3)
+	match = re.findall( r'(\d{1,2})日(\d{1,2})点|时', sentence4)
+	print match
+	today= datetime.date.today()
+	today=str(today).split('-')
+	if match !=[]:
+		for x in range(len(match)):
+			j1=int(today[2])
+			j2=int(match[x][0])
+			print j2
+			if j1<j2:
+				if int(today[1])!=1:
+					tempStartTime=today[0]+'-'+str(int(today[1])-1)+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
+				else:
+					tempStartTime=today[0]+'-'+'12'+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
+			else:
+				tempStartTime=today[0]+'-'+today[1]+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
+			print tempStartTime
+			if isVaildDate(tempStartTime):
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
+				tag="ymdh"
+			else:
+				return 'timeError'
+
+	sentence4 = re.sub(r'(\d{1,2})日(\d{1,2})点|时', "", sentence3)
+	match = re.findall( r'(\d{4})年(\d{1,2})月', sentence4)
+	print match
+	today= datetime.date.today()
+	today=str(today).split('-')
+	if match !=[]:
+		for x in range(len(match)):
+			j1=int(today[2])
+			j2=int(match[x][0])
+			print j2
+			if j1<j2:
+				if int(today[1])!=1:
+					tempStartTime=today[0]+'-'+str(int(today[1])-1)+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
+				else:
+					tempStartTime=today[0]+'-'+'12'+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
+			else:
+				tempStartTime=today[0]+'-'+today[1]+'-'+match[x][0]+" "+match[x][1]+ ":00:00"
 			print tempStartTime
 			if isVaildDate(tempStartTime):
 				# startTime=tempStartTime+'Z'
 				tl.append(tempStartTime)
 			else:
 				return 'timeError'
-		if len(match)==2:
-			# print match
-			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" 00:00:00"
-			tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" 00:00:00"
+		
 
-			if isVaildDate(tempStartTime):
-				# startTime=tempStartTime+'Z'
-				tl.append(tempStartTime)
-			else:
-				return 'timeError'
-			if isVaildDate(tempEndTime):
-				tl.append(tempEndTime)
-			else:
-				return 'timeError'
 	print tl
 
 
@@ -462,7 +533,7 @@ sentenceResult=getQueryTypeSet(divideResult,dict2,para,pro,paraCategory)#set
 
 if sentenceResult==0:
 	print ""
-	print connectTuring(sentence)
+	# print connectTuring(sentence)
 else:
 	hitResult=getPrefixHit(sentenceResult,st)#dict
 	rankResult=ranking(hitResult,sentenceResult)#dict
