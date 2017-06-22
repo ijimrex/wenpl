@@ -17,68 +17,76 @@ sys.setdefaultencoding('utf-8')
 
 # st={"查询 机房":"check the temperature","查询 湿度 机房":"check the moisture"}
 
+sentence="查询2017年2月10日到2017年5月20日的信息"#todo：需要预处理一下，去掉空格和无意义符号
+sentence=sentence.replace(' ', '')
 def parseDate(string):
 	preDate=getDate()
 	word=None
-	endTime=str(datetime.datetime.now())+'Z'
+	
+	tl=[]
+	tl.append(str(datetime.datetime.now()))
 	for key in preDate.keys():
 		word=re.match(key, sentence)
 		if word:
 			break
 	if word!=None and preDate[word.group()]=='现在':
 		endTime=str(datetime.datetime.now())+'Z'
-		# print endTime
-	# print isVaildDate('2017-6-30 14:00:00')
+		tl.append(str(datetime.datetime.now()))
+
 	#用户输入时间转成系统时间
 	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})点|时', sentence)
+	# print match
 	if match !=[]:
 		if len(match)==1:
 			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
 			if isVaildDate(tempStartTime):
-				startTime=tempStartTime+'Z'
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
 			else:
 				return 'timeError'
 		if len(match)==2:
 			# print match
-			if int(match[0][0])<int(match[1][0]) or int(match[0][1])<int(match[1][1]) or int(match[0][2])<int(match[1][2]) or int(match[0][3])<int(match[1][3]):
-				tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
-				tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
-			else:
-				endTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
-				startTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
-
+			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
+			tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
 			if isVaildDate(tempStartTime):
-				startTime=tempStartTime+'Z'
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
 			else:
 				return 'timeError'
 			if isVaildDate(tempEndTime):
-				endTime=tempEndTime+'Z'
+				# endTime=tempEndTime+'Z'
+				tl.append(tempEndTime)
 			else:
 				return 'timeError'
-		print [startTime,endTime]
-		return[startTime,endTime]
 
-	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence)
+	match = re.findall( r'(\d{4})年(\d{1,2})月(\d{1,2})日\D+', sentence)
+	print match
 	if match !=[]:
 		if len(match)==1:
-			startTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+"00:00:00"
+			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" 00:00:00"
+			print tempStartTime
+			if isVaildDate(tempStartTime):
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
+			else:
+				return 'timeError'
 		if len(match)==2:
 			# print match
-			if int(match[0][0])<int(match[1][0]) or int(match[0][1])<int(match[1][1]) or int(match[0][2])<int(match[1][2]) or int(match[0][3])<int(match[1][3]):
-				startTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":00:00"
-				endTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":59:59"
-			else:
-				endTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" "+match[0][3]+":59:59"
-				startTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" "+match[1][3]+":00:00"
+			tempStartTime=match[0][0]+'-'+match[0][1]+'-'+match[0][2]+" 00:00:00"
+			tempEndTime=match[1][0]+'-'+match[1][1]+'-'+match[1][2]+" 00:00:00"
+
 			if isVaildDate(tempStartTime):
-				startTime=tempStartTime+'Z'
+				# startTime=tempStartTime+'Z'
+				tl.append(tempStartTime)
 			else:
 				return 'timeError'
 			if isVaildDate(tempEndTime):
-				endTime=tempEndTime+'Z'
+				tl.append(tempEndTime)
 			else:
 				return 'timeError'
-		return[startTime,endTime]
+	print tl
+
+
 
 
 
@@ -426,8 +434,6 @@ def showList(l):
 #     fin2.close()
 #     # print response.read()
 #     return response.read()
-sentence="2017年2月10日到2017年5月20日14点"#todo：需要预处理一下，去掉空格和无意义符号
-sentence=sentence.replace(' ', '')
 people=getPeople()
 cities=getPosition('cities')
 towns=getPosition('towns')
