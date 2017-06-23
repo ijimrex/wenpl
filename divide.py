@@ -19,31 +19,32 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 
-sentence = "查询2017年3月3日1点到1月的信息"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2016年7月3日1点到2013年5月的信息"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseDate(string):
     preDate = getDate()
     word = None
-    tl = []
-    tag = ""
+    timeList = []
+    tag = []
     yearOfMonth = []
     today = datetime.date.today()
     today = str(today).split('-')
     yearOfMonth = today
     # print yearOfMonth
-    needReraneg=False
-    # tl.append(str(datetime.datetime.now()))
+    needRerange=False
+    # timeList.append(str(datetime.datetime.now()))
     for key in preDate.keys():
         word = re.match(key, sentence)
         if word:
             break
     if word is not None and preDate[word.group()] == '现在':
         endTime = str(datetime.datetime.now()) + 'Z'
-        # tl.append(str(datetime.datetime.now()))
+        # timeList.append(str(datetime.datetime.now()))
 
     # 用户输入时间转成系统时间
     #年月日时
+    print "--------年月日时--------"
     match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence)
     print match
     if match != []:
@@ -52,14 +53,12 @@ def parseDate(string):
                 '-' + match[x][2] + " " + match[x][3] + ":00:00"
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[0]=match[x][0]
                 yearOfMonth[1]=match[x][1]
                 yearOfMonth[2]=match[x][2]
                 yearOfMonth.append(match[x][3])
-
-
-                tag = "ymdh"
+                tag.append("ymdh")
             else:
                 return 'timeError'
 
@@ -70,21 +69,24 @@ def parseDate(string):
 
 
 
+
     #年月日
+    print "--------年月日--------"
     match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence1)
     # print match
     if match != []:
         for x in range(len(match)):
             tempStartTime = match[x][0] + '-' + \
                 match[x][1] + '-' + match[x][2] + " 00:00:00"
-            print tempStartTime
+            # print tempStartTime
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[0]=match[x][0]
                 yearOfMonth[1]=match[x][1]
                 yearOfMonth[2]=match[x][2]
-                tag = "ymd"
+                tag.append("ymd")
+
             else:
                 return 'timeError'
 
@@ -92,22 +94,21 @@ def parseDate(string):
 
 
     # 月日时
+    print "--------月日时--------"
     match = re.findall(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence2)
     if match != []:
-        if len(tl)==1:
+        if len(timeList)==1:
             tempStartTime = yearOfMonth[0] + '-' + match[x][0] + '-' + match[x][1] + " " + match[x][2] + ":00:00"
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[1] = match[x][0]
                 yearOfMonth[2] = match[x][1]
                 yearOfMonth.append(match[x][2])
-                tag = "mdh"
+                tag.append("mdh")
             else:
                 return 'timeError'
         else:
-            if len(match)==2:
-                needReraneg=True
             for x in range(len(match)):
                 j1 = int(today[1]) * 100 + int(today[2])
                 j2 = int(match[x][0]) * 100 + int(match[x][1])
@@ -121,36 +122,34 @@ def parseDate(string):
                 # print tempStartTime
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[1] = match[x][0]
                 yearOfMonth[2] = match[x][1]
                 yearOfMonth.append(match[x][2])
-                tag = "mdh"
+                tag.append("mdh")
             else:
                 return 'timeError'
-    print yearOfMonth
 
     sentence3 = re.sub(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', "", sentence2)
 
 
     # 月日
+    print "--------月日--------"
     match = re.findall(r'(\d{1,2})月(\d{1,2})日', sentence3)
 
     # print match
     if match != []:
-        if len(tl)==1:
+        if len(timeList)==1:
             tempStartTime = yearOfMonth[0] + '-' + match[x][0] + '-' + match[x][1] + " 00:00:00"
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[1] = match[x][0]
                 yearOfMonth[2] = match[x][1]
-                tag = "md"
+                tag.append("md")
             else:
                 return 'timeError'
         else:
-            if len(match)==2:
-                needReraneg=True
             for x in range(len(match)):
                 j1 = int(today[1]) * 100 + int(today[2])
                 j2 = int(match[x][0]) * 100 + int(match[x][1])
@@ -161,29 +160,29 @@ def parseDate(string):
                 else:
                     tempStartTime = today[0] + '-' + \
                         match[x][0] + '-' + match[x][1] + " 00:00:00"
-                print tempStartTime
                 if isVaildDate(tempStartTime):
                     # startTime=tempStartTime+'Z'
-                    tl.append(tempStartTime)
+                    timeList.append(tempStartTime)
                     yearOfMonth[1] = match[x][0]
                     yearOfMonth[2] = match[x][1]
-                    tag = "md"
+                    tag.append( "md")
                 else:
                     return 'timeError'
     sentence4 = re.sub(r'(\d{1,2})月(\d{1,2})日', "", sentence3)
     # 日时
+    print "--------日时--------"
     match = re.findall(r'(\d{1,2})日(\d{1,2})[点|时]', sentence4)
     print match
 
     if match != []:
-        if len(tl)==1:
+        if len(timeList)==1:
             tempStartTime = yearOfMonth[0] + '-' + yearOfMonth[1] + '-' + match[x][0] + " " + match[x][1] + ":00:00"
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[2] = match[x][0]
                 yearOfMonth.append(match[x][1])
-                tag = "dh"
+                tag.append("dh")
             else:
                 return 'timeError'
         else:
@@ -202,132 +201,177 @@ def parseDate(string):
                 print tempStartTime
                 if isVaildDate(tempStartTime):
                     # startTime=tempStartTime+'Z'
-                    tl.append(tempStartTime)
+                    timeList.append(tempStartTime)
                     yearOfMonth[2] = match[x][0]
                     yearOfMonth.append(match[x][1]) 
-                    tag = "dh"
+                    tag.append("dh")
                 else:
                     return 'timeError'
 
     sentence5 = re.sub(r'(\d{1,2})日(\d{1,2})[点|时]', "", sentence4)
 
     # 年月
+    print "--------年月--------"
     match = re.findall(r'(\d{4})年(\d{1,2})月', sentence5)
     print match
     if match != []:
-        if len(match)==2:
-            needReraneg=True
         for x in range(len(match)):
-            monthRange = calendar.monthrange(int(match[x][0]), int(match[x][1]))
-            print monthRange
+            # monthRange = calendar.monthrange(int(match[x][0]), int(match[x][1]))
+            # print monthRange
             tempStartTime = match[x][0] + '-' + \
-                match[x][1] +"-"+ str(monthRange[1]) + " 23:59:59"
+                match[x][1] +"-1 00:00:00"
             print tempStartTime
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[0] = match[x][0]
                 yearOfMonth[1] = match[x][1]
-                tag = "ym"
+                tag.append("ym")
             else:
                 return 'timeError'
 
     sentence6 = re.sub(r'(\d{4})年(\d{1,2})月', "", sentence5)
 
     # 年
+    print "--------年--------"
     match = re.findall(r'(\d{4})年', sentence6)
     print match
     if match != []:
-        if len(match)==2:
-            needReraneg=True
         for x in range(len(match)):
-            tempStartTime = match[x] + '-12-31' + " 23:59:59"
+            tempStartTime = match[x] + '-1-1' + " 00:00:00"
             print tempStartTime
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[0] = match[0]
-                tag = "y"
+                tag.append("y")
             else:
                 return 'timeError'
     sentence7 = re.sub(r'(\d{4})年', "", sentence6)
 
     # 月
+    print "--------月--------"
     match = re.findall(r'(\d{1,2})月', sentence7)
     print match
     if match != []:
-        if len(match)==2:
-            needReraneg=True
-        if len(tl) == 1 :
+        if len(timeList) == 1 :
             if len(match) == 1:
                 if int(match[0]) < int(yearOfMonth[1]):
                     monthRange = calendar.monthrange(int(yearOfMonth[0]), int(yearOfMonth[1]))
                     tempStartTime = str(yearOfMonth[0]) + "-" + match[x] + '-1' + " 00:00:00"
-                    tl[0] = str(yearOfMonth[0]) + "-" + str(yearOfMonth[1]) + '-' + str(monthRange[1]) + " 23:59:59"
+                    timeList[0] = str(yearOfMonth[0]) + "-" + str(yearOfMonth[1]) + '-' + str(monthRange[1]) + " 00:00:00"
                 else:
                     monthRange = calendar.monthrange(
                         int(yearOfMonth[0]), int(match[0]))
-                    tempStartTime = str(yearOfMonth[0]) + "-" + match[x] + '-' + str(monthRange[1]) + " 23:59:59"
+                    tempStartTime = str(yearOfMonth[0]) + "-" + match[x] + '-' + str(monthRange[1]) + " 00:00:00"
                 # print tempStartTime
                 if isVaildDate(tempStartTime):
                     # startTime=tempStartTime+'Z'
-                    tl.append(tempStartTime)
+                    timeList.append(tempStartTime)
                     yearOfMonth[1] = match[0]
-                    tag = ""
+                    tag.append("m")
                 else:
                     return 'timeError'
         else:
-            if len(match)==2:
-                needReraneg=True
             for x in range(len(match)):
                 tempStartTime = today[0] + "-" + match[x] + '-1' + " 00:00:00"
                 if isVaildDate(tempStartTime):
                     # startTime=tempStartTime+'Z'
-                    tl.append(tempStartTime)
+                    timeList.append(tempStartTime)
                     yearOfMonth[1] = match[0]
                     # yearOfMonth[1]=match[0]
-                    tag = "m"
+                    tag.append("m")
                 else:
                     return 'timeError'
 
     sentence8 = re.sub(r'(\d{1,2})月', "", sentence7)
 
     # 日
+    print "--------日--------"
     match = re.findall(r'(\d{1,2})日', sentence8)
     print match
     if match != []:
-        if len(match)==2:
-            needReraneg=True
         for x in range(len(match)):
             tempStartTime = yearOfMonth[0] + "-" + \
                 yearOfMonth[1] + '-' + match[x] + " 00:00:00"
             print tempStartTime
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
+                timeList.append(tempStartTime)
                 yearOfMonth[2] = match[0]
-                tag = ""
+                tag.append("d")
             else:
                 return 'timeError'
 
     sentence9 = re.sub(r'(\d{1,2})日', "", sentence8)
 
     # 时
+    print "--------时--------"
     match = re.findall(r'(\d{1,2})[点|时]', sentence9)
     print match
     if match != []:
         for x in range(len(match)):
-            tempStartTime = today[0] + "-" + today[1] + \
-                '-' + today[2] + match[x] + ":00:00"
-            print tempStartTime
+            tempStartTime = yearOfMonth[0] + "-" + yearOfMonth[1] + \
+                '-' + yearOfMonth[2] + " "+match[x] + ":00:00"
+            print tempStartTime.day
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
-                tl.append(tempStartTime)
-                tag = ""
+                timeList.append(tempStartTime)
+                tag.append("h")
             else:
                 return 'timeError'
+    print timeList
 
-    print tl
+
+    timeListlen=len(timeList)
+    returnList=[]
+    todayTime=str(today[0]) + "-" + str(today[1]) + '-' + str(today[2]) + " 23:59:59"
+    timecheck=[]
+    for x in range(timeListlen):
+        timecheck.append(datetime.datetime.strptime(timeList[x], "%Y-%m-%d %H:%M:%S"))
+    print timecheck[0].year
+    if timeListlen==0 and tag==[]:
+        return 0
+    if timeListlen==1:
+        returnList.append(timeList[0])
+        returnList.append(todayTime)
+        return returnList
+    if timeListlen==2:
+        if compDate(timecheck[0],timecheck[1])<0:
+            returnList.append(timeList[0])
+            monthRange = calendar.monthrange(timecheck[1].year, timecheck[1].month)
+            if tag[1]=='y':
+                returnList.append(conDate(timecheck[1].year,12,31,23,59,59))
+            elif tag[1]=='ym' or tag[1]=='m':
+                returnList.append(conDate(timecheck[1].year,timecheck[1].month,monthRange[1],23,59,59))
+            elif tag[1]=='ymd' or tag[1]=='md' or tag[1]=='d':
+                returnList.append(conDate(timecheck[1].year,timecheck[1].month,timecheck[1].day,23,59,59))
+            elif tag[1]=='ymdh' or tag[1]=='mdh' or tag[1]=='dh' or tag[1]=='h':
+                returnList.append(conDate(timecheck[1].year,timecheck[1].month,timecheck[1].day,timecheck[1].hour,59,59))
+        else:
+            returnList.append(timeList[1])
+            monthRange = calendar.monthrange(timecheck[0].year, timecheck[0].month)
+            if tag[0]=='y':
+                returnList.append(conDate(timecheck[0].year,12,31,23,59,59))
+            elif tag[0]=='ym' or tag[0]=='m':
+                returnList.append(conDate(timecheck[0].year,timecheck[0].month,monthRange[1],23,59,59))
+            elif tag[0]=='ymd' or tag[0]=='md' or tag[0]=='d':
+                returnList.append(conDate(timecheck[0].year,timecheck[0].month,timecheck[0].day,23,59,59))
+            elif tag[0]=='ymdh' or tag[0]=='mdh' or tag[0]=='dh' or tag[0]=='h':
+                returnList.append(conDate(timecheck[0].year,timecheck[0].month,timecheck[0].day,timecheck[0].hour,59,59))
+    print returnList
+
+
+
+
+
+
+
+
+
+
+    # if tlen==2 and not needRerange:
+
 
     # if
 
@@ -335,6 +379,13 @@ def parseDate(string):
     # print startTime
     # return match
     # print ((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M"))
+def compDate(l1,l2):
+    c1=l1.year*100+l1.month*100+l1.day*100+l1.hour
+    c2=l2.year*100+l2.month*100+l2.day*100+l2.hour
+    return c1-c2
+
+def conDate(y,m,d,h,mi,s):
+    return str(y)+'-'+str(m)+'-'+str(d)+' '+str(h)+':'+str(mi)+':'+str(s)
 
 
 def getDate():
