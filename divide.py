@@ -17,7 +17,7 @@ jieba.load_userdict('../wendata/dict/dict_date.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询2017年1月到3月余文乐的操作日志"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2017年3月2日到2018年的余文乐的日志"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseDate(string):
@@ -502,7 +502,7 @@ def divide(str):
 
 
 def filt(li, type):
-        # get the specific words depending on the type you want
+    # get the specific words depending on the type you want
     rli = []
     for w in li:
         if w[1] == type:
@@ -628,7 +628,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
     else:
         for x in p:
             if len(paraDict[x[0]]) == 2:
-                url = st[x[0]][0] + para[0] + st[x[0]][1] + para[1][0]+st[x[0]][1]+para[1][1]
+                url = st[x[0]][0] + para[0] + st[x[0]][1] + para[1][0]+st[x[0]][2]+para[1][1]
                 break
 
     # url=st[p[0][0]]
@@ -650,7 +650,7 @@ def getResult(url):
     fin1.close()
     # print response.read()
     return url
-    return response.read()
+    # return response.read()
 
 
 def resort(l1, l2):
