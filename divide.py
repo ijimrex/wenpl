@@ -19,7 +19,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 
-sentence = "查询2016年7月3日1点到2013年5月的信息"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2015年7月2日到2013年5月3日1点的信息"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseDate(string):
@@ -380,8 +380,8 @@ def parseDate(string):
     # return match
     # print ((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M"))
 def compDate(l1,l2):
-    c1=l1.year*100+l1.month*100+l1.day*100+l1.hour
-    c2=l2.year*100+l2.month*100+l2.day*100+l2.hour
+    c1=((l1.year*100+l1.month)*100+l1.day)*100+l1.hour
+    c2=((l2.year*100+l2.month)*100+l2.day)*100+l2.hour
     return c1-c2
 
 def conDate(y,m,d,h,mi,s):
