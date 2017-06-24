@@ -13,11 +13,13 @@ import calendar
 jieba.load_userdict('../wendata/dict/dict.txt')
 jieba.load_userdict('../wendata/dict/dict_manual.txt')
 jieba.load_userdict('../wendata/dict/dict_date.txt')
+jieba.load_userdict('../wendata/dict/dict2.txt')
+
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询2017年3月2日到2018年的余文乐的日志"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2017年余文乐全部工单"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseDate(string):
@@ -204,8 +206,7 @@ def parseDate(string):
                     yearOfMonth[2] = match[x][0]
                     yearOfMonth.append(match[x][1]) 
                     tag.append("dh")
-                else:
-                    return 'timeError'
+
 
     sentence5 = re.sub(r'(\d{1,2})日(\d{1,2})[点|时]', "", sentence4)
 
@@ -226,8 +227,7 @@ def parseDate(string):
                 yearOfMonth[0] = match[x][0]
                 yearOfMonth[1] = match[x][1]
                 tag.append("ym")
-            else:
-                return 'timeError'
+
 
     sentence6 = re.sub(r'(\d{4})年(\d{1,2})月', "", sentence5)
 
@@ -244,8 +244,7 @@ def parseDate(string):
                 timeList.append(tempStartTime)
                 yearOfMonth[0] = match[0]
                 tag.append("y")
-            else:
-                return 'timeError'
+
     sentence7 = re.sub(r'(\d{4})年', "", sentence6)
 
     # 月
@@ -269,8 +268,7 @@ def parseDate(string):
                     timeList.append(tempStartTime)
                     yearOfMonth[1] = match[0]
                     tag.append("m")
-                else:
-                    return 'timeError'
+
         else:
             for x in range(len(match)):
                 tempStartTime = today[0] + "-" + match[x] + '-1' + " 00:00:00"
@@ -280,8 +278,7 @@ def parseDate(string):
                     yearOfMonth[1] = match[0]
                     # yearOfMonth[1]=match[0]
                     tag.append("m")
-                else:
-                    return 'timeError'
+
 
     sentence8 = re.sub(r'(\d{1,2})月', "", sentence7)
 
@@ -299,8 +296,7 @@ def parseDate(string):
                 timeList.append(tempStartTime)
                 yearOfMonth[2] = match[0]
                 tag.append("d")
-            else:
-                return 'timeError'
+
 
     sentence9 = re.sub(r'(\d{1,2})日', "", sentence8)
 
@@ -316,9 +312,9 @@ def parseDate(string):
                 # startTime=tempStartTime+'Z'
                 timeList.append(tempStartTime)
                 tag.append("h")
-            else:
-                return 'timeError'
-    # print timeList 
+    print timeList 
+    if len(timeList)==0:
+        return 0
     return normalizeDate(operatetimeList(timeList,tag))
 
     
@@ -477,6 +473,16 @@ def getGenerals():
     # print generals
     return generals
 
+def getPoints():
+    generals = {}
+    purl = "../wendata/dict/points.json"
+    fin = open(purl, 'r+')
+    p = fin.read()
+    jp = json.loads(p)
+    generals = toUTF8(jp)
+    # print generals
+    return generals
+
 
 def getPeople():
     people = {}
@@ -495,7 +501,7 @@ def divide(str):
     li = []
 
     for w in words:
-        # print w.word
+        print w.word
         # print w.flag
         li.append([w.word.encode('utf-8'), w.flag.encode('utf-8')])
     return li
@@ -532,20 +538,49 @@ def getQueryTypeSet(li, dictionary, para, pro, paraCategory):
     hasPosition = 0
     hasName = 0
     paradic = {}
-    # print dictionary
+    # print pro
     for w in li:
         word = w[0]
-        if word in dictionary:
+        if word in dictionary.keys():
             qType.append(dictionary[word])
             if word in pro:
                 Nkey += 1
-            if word in paraCategory:
+            if word in paraCategory.keys():
                 paradic[paraCategory[word]] = word
     for x in paradic.values():
         para.append(x)
     if Nkey == 0:
         return 0
     return qType
+
+
+def pointquery(li,points,devices,stations,para):
+    # showDict(stations)
+    point=""
+    device=""
+    station=""
+    for w in li:
+        word=w[0]
+        # print 1
+        if points.has_key(word):
+            point=word
+            # print"q"
+        elif devices.has_key(word):
+            device=word
+            # print"w"
+        elif stations.has_key(word):
+            station=word
+            # print"e"
+
+    if point!="" and station!="" and device!="":
+        url ="/data/point_info_with_real_time?station_name="+station+"&device_name="+device+"&point_name="+point
+        return getResult(url)
+    else:
+        return 0
+
+        
+     
+
 
 
 def getPrefixHit(qType, store):
@@ -610,7 +645,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
     # p[[[],[]],[]]
     # st{:}
     p = resort(p, rp)
-    # print p
+    print para
     writeData(p)
     if len(para) == 0:
         for x in p:
@@ -625,7 +660,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
                 if qType.count(paraDict[x[0]][0][0]) == 1:
                     url = st[x[0]] + para[0]
                     break
-    else:
+    elif len(para) == 2:
         for x in p:
             if len(paraDict[x[0]]) == 2:
                 url = st[x[0]][0] + para[0] + st[x[0]][1] + para[1][0]+st[x[0]][2]+para[1][1]
@@ -780,6 +815,7 @@ def test():
     stations = getPosition('stations')
     devices = getPosition('devices')
     positions = mergePositions([cities, towns, stations, devices])
+    points=getPoints()
     pro = getPros()
     general = getGenerals()
     paraCategory = dict(positions, **people)
@@ -792,28 +828,32 @@ def test():
     paraDict = paraFilter(st)
     date = parseDate(sentence)
 
-
-    # print 'dic'
+    # print stations
     # print paraDict
     # keyphrase.append(positions.keys())
     divideResult = divide(sentence)  # list
+
     sentenceResult = getQueryTypeSet(
         divideResult,
         dict2,
         para,
         pro,
         paraCategory)  # set
-    print para
-    # print sentenceResult
+    # print para[0]
+    # print sentenceResult[2]
 
-
-    if sentenceResult == 0:
+    pointResult=pointquery(divideResult,points,devices,stations,para)
+    if pointResult!=0:
+        print pointResult
+    elif sentenceResult == 0:
         print ""
-        # print connectTuring(sentence)
+        print connectTuring(sentence)
     else:
         if date!=0:
             sentenceResult.append('time')
+
         hitResult = getPrefixHit(sentenceResult, st)  # dict
+        print para[0]
         rankResult = ranking(hitResult, sentenceResult)  # dict
         rerankingResult = revranking(hitResult)
         if date!=0:

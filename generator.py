@@ -158,8 +158,8 @@ def getAll(data):
 	writePros(cities,'cities')
 	writePros(towns,'towns')
 	writePros(stations,'stations')
-	createDict([cities,towns,stations,devices])
-	writeData(names,'names')
+	createDict([cities,towns,stations,devices,names])
+	writePros(names,'points')
 
 	
 
