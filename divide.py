@@ -19,11 +19,38 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询2017年余文乐全部工单"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2017年4月3日6点到今天的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
-def parseDate(string):
+def parseCommonExpressionDate(sentence):
     preDate = getDate()
+    words = []
+    timeList = []
+    tag = []
+    for key in preDate.keys():
+        words.append(re.search(key, sentence))
+    print words
+    for word in words:
+        if word is not None and (preDate[word.group()] == '现在' or preDate[word.group()] == '今天'):
+            timeList.append(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            tag.append('ymdh')
+        if word is not None and preDate[word.group()] == '昨天':
+            timeList.append((datetime.datetime.now()-datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"))
+            tag.append('ymd')
+        if word is not None and preDate[word.group()] == '前天':
+            timeList.append((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S"))
+            tag.append('ymd')    
+    return timeList
+
+def parseCountExpressionDate(sentence):
+    words = []
+    timeList = []
+    match = re.findall(r'(\d)年前', sentence)
+
+
+
+def parseDate(sentence):
+
     word = None
     timeList = []
     tag = []
@@ -34,32 +61,19 @@ def parseDate(string):
     other=False
     # print yearOfMonth
     needRerange=False
+    timeList=parseCommonExpressionDate(sentence)
 
-    # for key in preDate.keys():
-    #     word = re.search(key, sentence)
-    #     if word:
-    #         break
-    # if word is not None and preDate[word.group()] == '现在':
-    #     timeList.append(str(datetime.datetime.now()))
-    #     tag.append('ymdh')
-    # if word is not None and preDate[word.group()] == '昨天':
-    #     print datetime.datetime.today().ToString("yyyy-MM-dd HH:mm:ss.fff")
-    #     timeList.append(str(datetime.datetime.now()))
-    #     tag.append('ymd')
-    # if word is not None and preDate[word.group()] == '前天':
-    #     yesterday =datetime.datetime.today()-datetime.timedelta(days=2)
-    #     timeList.append(str(datetime.datetime.now()))
-    #     tag.append('ymd')
-    # if word is not None and preDate[word.group()] == '':
-    #     yesterday =datetime.datetime.today()-datetime.timedelta(days=2)
-    #     timeList.append(str(datetime.datetime.now()))
-    #     tag.append('ymd')
     
 
 
     # 用户输入时间转成系统时间
+
     #年月日时
     # print "--------年月日时--------"
+    # isValid=acceptDate(sentence)
+    # print isValid
+    # if not isValid:
+    #     return 0
     match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence)
     # print match
     if match != []:
@@ -332,11 +346,21 @@ def parseDate(string):
 
 
     # if
+def acceptDate(sentence):
+    print sentence
+    match=[]
+    match.append(re.findall(r'(\d{4})年(\d{1,2})日', sentence))
+    match.append(re.findall(r'(\d{4})年(\d{1,2}点)|(\d{1,2}时)', sentence))
+    match.append(re.findall(r'(\d{1,2})月(\d{1,2}点)|(\d{1,2}时)', sentence))
+    print match
+    for x in match:
+        if x!=None:
+            return False
+    return True
 
-# print 'date'
-    # print startTime
-    # return match
-    # print ((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M"))
+
+
+
 def compDate(l1,l2):
     c1=((l1.year*100+l1.month)*100+l1.day)*100+l1.hour
     c2=((l2.year*100+l2.month)*100+l2.day)*100+l2.hour
@@ -564,14 +588,10 @@ def pointquery(li,points,devices,stations,para):
         # print 1
         if points.has_key(word):
             point=word
-            # print"q"
         elif devices.has_key(word):
             device=word
-            # print"w"
         elif stations.has_key(word):
             station=word
-            # print"e"
-
     if point!="" and station!="" and device!="":
         url ="/data/point_info_with_real_time?station_name="+station+"&device_name="+device+"&point_name="+point
         return getResult(url)
@@ -587,18 +607,9 @@ def getPrefixHit(qType, store):
     # calculate the hit times of each prefix sentences in store
     count = {}
     setType = set(qType)
-    # print store
-    # isZero=True
     for i in range(len(store.keys())):
-        # print store.keys()[i]
         setStore = set(store.keys()[i].split(' '))
-        # print setType
-        # print setStore
-        # print store
-        # print setStore&setType
         count[store.keys()[i]] = len(setStore & setType)
-
-    # print count
     return count
 
 
@@ -610,7 +621,6 @@ def ranking(count, qType):
     for x in count.keys():
         p[x] = float(count[x] / float(N))
     p = sort(p)
-    # for x in p:
     return p
 
 
@@ -645,7 +655,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
     # p[[[],[]],[]]
     # st{:}
     p = resort(p, rp)
-    print para
+    # print para
     writeData(p)
     if len(para) == 0:
         for x in p:
@@ -853,7 +863,7 @@ def test():
             sentenceResult.append('time')
 
         hitResult = getPrefixHit(sentenceResult, st)  # dict
-        print para[0]
+
         rankResult = ranking(hitResult, sentenceResult)  # dict
         rerankingResult = revranking(hitResult)
         if date!=0:
