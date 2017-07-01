@@ -19,7 +19,7 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询2017年4月3日6点到今天的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询20小时前到现在的的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
@@ -27,26 +27,70 @@ def parseCommonExpressionDate(sentence):
     words = []
     timeList = []
     tag = []
+    numbers=[]
+    yearOfMonth=[]
+    today = datetime.date.today()
+    today = str(today).split('-')
+    yearOfMonth = today
     for key in preDate.keys():
         words.append(re.search(key, sentence))
-    print words
     for word in words:
+        numbers=[]
         if word is not None and (preDate[word.group()] == '现在' or preDate[word.group()] == '今天'):
-            timeList.append(str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            tag.append('ymdh')
+            numbers=time.strptime(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
+            tempStartTime = str(numbers.tm_year) + '-' + str(numbers.tm_mon) + '-' + str(numbers.tm_mday) + " 00:00:00"
+            timeList.append(tempStartTime)
+            tag.append('ymd')
         if word is not None and preDate[word.group()] == '昨天':
-            timeList.append((datetime.datetime.now()-datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"))
+            numbers=time.strptime((datetime.datetime.now()-datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
+            tempStartTime = str(numbers.tm_year) + '-' + str(numbers.tm_mon) + '-' + str(numbers.tm_mday) + " 00:00:00"
+            timeList.append(tempStartTime)
             tag.append('ymd')
         if word is not None and preDate[word.group()] == '前天':
-            timeList.append((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S"))
-            tag.append('ymd')    
-    return timeList
+            numbers=time.strptime((datetime.datetime.now()-datetime.timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
+            tempStartTime = str(numbers.tm_year) + '-' + str(numbers.tm_mon) + '-' + str(numbers.tm_mday) + " 00:00:00"
+            timeList.append(tempStartTime)
+            tag.append('ymd')
+        if word is not None:
+            yearOfMonth[0]=str(numbers.tm_year)
+            yearOfMonth[1]=str(numbers.tm_mon)
+            yearOfMonth[2]=str(numbers.tm_mday)
+    return [timeList,tag,yearOfMonth]
 
-def parseCountExpressionDate(sentence):
+def parseCountExpressionDate(SENTENCE,TIMELIST,TAG,YEAROFMONTH):
+    sentence=copy.deepcopy(SENTENCE)
+    timeList=copy.deepcopy(TIMELIST)
+    tag=copy.deepcopy(TAG)
+    yearOfMonth=copy.deepcopy(YEAROFMONTH)
     words = []
     timeList = []
-    match = re.findall(r'(\d)年前', sentence)
-
+    tag = []
+    match = re.findall(r'(\d+)天前', sentence)
+    sentence1 = re.sub(r'(\d+)天前',"",sentence)
+    for m in match:
+        numbers=[]
+        if m is not None:
+            numbers=time.strptime((datetime.datetime.now()-datetime.timedelta(days=int(m))).strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
+            tempStartTime = str(numbers.tm_year) + '-' + str(numbers.tm_mon) + '-' + str(numbers.tm_mday) + " 00:00:00"
+            timeList.append(tempStartTime)
+            tag.append('ymd')
+            yearOfMonth[0]=str(numbers.tm_year)
+            yearOfMonth[1]=str(numbers.tm_mon)
+            yearOfMonth[2]=str(numbers.tm_mday)
+    match = re.findall(r'(\d+)小时前', sentence1)
+    sentence2 = re.sub(r'(\d+)小时前',"",sentence1)
+    for m in match:
+        numbers=[]
+        if m is not None:
+            numbers=time.strptime((datetime.datetime.now()-datetime.timedelta(hours=int(m))).strftime("%Y-%m-%d %H:%M:%S"),"%Y-%m-%d %H:%M:%S")
+            tempStartTime = str(numbers.tm_year) + '-' + str(numbers.tm_mon) + '-' + str(numbers.tm_mday) + " "+str(numbers.tm_hour)+":00:00"
+            timeList.append(tempStartTime)
+            tag.append('ymdh')
+            yearOfMonth[0]=str(numbers.tm_year)
+            yearOfMonth[1]=str(numbers.tm_mon)
+            yearOfMonth[2]=str(numbers.tm_mday)
+            yearOfMonth.append(str(numbers.tm_hour))
+    return [timeList,tag,yearOfMonth,sentence]
 
 
 def parseDate(sentence):
@@ -61,10 +105,14 @@ def parseDate(sentence):
     other=False
     # print yearOfMonth
     needRerange=False
-    timeList=parseCommonExpressionDate(sentence)
-
-    
-
+    timeList=parseCommonExpressionDate(sentence)[0]
+    tag=parseCommonExpressionDate(sentence)[1]
+    yearOfMonth=parseCommonExpressionDate(sentence)[2]
+    pced=parseCountExpressionDate(sentence,timeList,tag,yearOfMonth)
+    timeList.extend(pced[0])
+    tag.extend(pced[1])
+    yearOfMonth=pced[2]
+    sentence=pced[3]
 
     # 用户输入时间转成系统时间
 
@@ -268,14 +316,15 @@ def parseDate(sentence):
     if match != []:
         if len(timeList) == 1 :
             if len(match) == 1:
+                print match
                 if int(match[0]) < int(yearOfMonth[1]):
                     monthRange = calendar.monthrange(int(yearOfMonth[0]), int(yearOfMonth[1]))
-                    tempStartTime = str(yearOfMonth[0]) + "-" + match[x] + '-1' + " 00:00:00"
+                    tempStartTime = str(yearOfMonth[0]) + "-" + match[0] + '-1' + " 00:00:00"
                     timeList[0] = str(yearOfMonth[0]) + "-" + str(yearOfMonth[1]) + '-' + str(monthRange[1]) + " 00:00:00"
                 else:
                     monthRange = calendar.monthrange(
                         int(yearOfMonth[0]), int(match[0]))
-                    tempStartTime = str(yearOfMonth[0]) + "-" + match[x] + '-' + str(monthRange[1]) + " 00:00:00"
+                    tempStartTime = str(yearOfMonth[0]) + "-" + match[0] + '-' + str(monthRange[1]) + " 00:00:00"
                 # print tempStartTime
                 if isVaildDate(tempStartTime):
                     # startTime=tempStartTime+'Z'
