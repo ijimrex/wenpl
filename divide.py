@@ -19,7 +19,7 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询20小时前到现在的的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询到现在的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
@@ -207,12 +207,12 @@ def parseDate(sentence):
     # print match
     if match != []:
         if len(timeList)==1:
-            tempStartTime = yearOfMonth[0] + '-' + match[x][0] + '-' + match[x][1] + " 00:00:00"
+            tempStartTime = yearOfMonth[0] + '-' + match[0][0] + '-' + match[0][1] + " 00:00:00"
             if isVaildDate(tempStartTime):
                 # startTime=tempStartTime+'Z'
                 timeList.append(tempStartTime)
-                yearOfMonth[1] = match[x][0]
-                yearOfMonth[2] = match[x][1]
+                yearOfMonth[1] = match[0][0]
+                yearOfMonth[2] = match[0][1]
                 tag.append("md")
         else:
             for x in range(len(match)):
@@ -415,6 +415,26 @@ def compDate(l1,l2):
     c2=((l2.year*100+l2.month)*100+l2.day)*100+l2.hour
     return c1-c2
 
+def findMin(l,tag):
+    mini=l[0]
+    t=tag[0]
+    for x in range(1,len(l)):
+        # print l[x]
+        if compDate(mini,l[x])>0:
+            mini=l[x]
+            t=tag[x]
+    return [mini,t]
+
+
+def findMax(l,tag):
+    maxi=l[0]
+    t=tag[0]
+    for x in range(1,len(l)):
+        if compDate(maxi,l[x])<0:
+            maxi=l[x]
+            t=tag[x]
+    return [maxi,t]
+
 def conDate(y,m,d,h,mi,s):
     return str(y)+'-'+str(m)+'-'+str(d)+' '+str(h)+':'+str(mi)+':'+str(s)
 
@@ -448,9 +468,16 @@ def operatetimeList(timeList,tag):
         elif tag[0]=='ymdh' or tag[0]=='mdh' or tag[0]=='dh' or tag[0]=='h':
             returnList.append(conDate(timecheck[0].year,timecheck[0].month,timecheck[0].day,timecheck[0].hour,59,59))
         return returnList
-    if timeListlen==2:
+    if timeListlen>=2:
+        # print timeList
+        maxi=findMax(timecheck,tag)
+        mini=findMin(timecheck,tag)
+        timecheck[0]=mini[0]
+        timecheck[1]=maxi[0]
+        tag[1]=maxi[1]
+        tag[0]=mini[1]
         if compDate(timecheck[0],timecheck[1])<0:
-            returnList.append(timeList[0])
+            returnList.append(conDate(timecheck[0].year,timecheck[0].month,timecheck[0].day,timecheck[0].hour,00,00))
             monthRange = calendar.monthrange(timecheck[1].year, timecheck[1].month)
             if tag[1]=='y':
                 returnList.append(conDate(timecheck[1].year,12,31,23,59,59))
@@ -461,7 +488,7 @@ def operatetimeList(timeList,tag):
             elif tag[1]=='ymdh' or tag[1]=='mdh' or tag[1]=='dh' or tag[1]=='h':
                 returnList.append(conDate(timecheck[1].year,timecheck[1].month,timecheck[1].day,timecheck[1].hour,59,59))
         else:
-            returnList.append(timeList[1])
+            returnList.append(conDate(timecheck[1].year,timecheck[1].month,timecheck[1].day,timecheck[1].hour,00,00))
             monthRange = calendar.monthrange(timecheck[0].year, timecheck[0].month)
             if tag[0]=='y':
                 returnList.append(conDate(timecheck[0].year,12,31,23,59,59))
@@ -574,7 +601,7 @@ def divide(str):
     li = []
 
     for w in words:
-        print w.word
+        # print w.word
         # print w.flag
         li.append([w.word.encode('utf-8'), w.flag.encode('utf-8')])
     return li
