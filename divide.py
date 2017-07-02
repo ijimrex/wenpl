@@ -19,7 +19,7 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询余文乐的工单"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询2017年杭州市的报警"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
@@ -717,7 +717,7 @@ def revranking(count):
     return p
 
 
-def excuteREST(p, rp, st, para, paraDict, qType):
+def excuteREST(p, rp, st, para, paraDict, qType,remember):
 
     # p:正排序后的store匹配度列表
     # rp:反排序后的store匹配度列表
@@ -735,6 +735,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
         for x in p:
             if len(paraDict[x[0]]) == 0:
                 url = st[x[0]]
+                remember.append(x)
                 break
     elif len(para) == 1:
         for x in p:
@@ -742,6 +743,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
                 # print paraDict[x[0]][0][0]
                 if qType.count(paraDict[x[0]][0][0]) == 1:
                     url = st[x[0]] + para[0]
+                    remember.append(x)
                     break
         if url=="":
             return 0
@@ -750,6 +752,7 @@ def excuteREST(p, rp, st, para, paraDict, qType):
         for x in p:
             if len(paraDict[x[0]]) == 2:
                 url = st[x[0]][0] + para[0] + st[x[0]][1] + para[1][0]+st[x[0]][2]+para[1][1]
+                remember.append(x)
                 break
         if url=="":
             return 0
@@ -763,12 +766,11 @@ def excuteREST(p, rp, st, para, paraDict, qType):
 
 
 def getResult(url):
-    print url
     turl = '../wendata/token'
     fin1 = open(turl, 'r+')
     token = fin1.read()
     url = 'http://www.intellense.com:3080' + url
-    # print url
+    print url
     fin1.close()
 
     req = urllib2.Request(url)
@@ -862,10 +864,48 @@ def connectTuring(a):
     return reson['text']
 
 
-def showResult(result,type):
-    None
+def showResult(result,types):
+    if types[0]=="查询 全部 工单":
+        return get_order_relations(result)
+
+    if types[0]=="查询 全部 设备 类型":
+        return get_device_type(result)
+
+    if types[0]=="查询 全部 设备":
+        return monitoring_manage_get_devices(result)
+
+    if types[0]=="查询 全部 采集点":
+        return get_point_types(result)
+
+    if types[0]=="查询 全部 应急 演练 预案":
+        return get_drill_plan(result)
+
+    if types[0]=="查询 局站 名称":
+        return get_stations_name(result)
+
+    if types[0]=="查询 全部 操作 日志":
+        return get_operation_logs(result)
+
+    if types[0]=="查询 position 报警 数量":
+        return get_children_with_warning_count(result)
+
+    if types[0]=="查询 position 员工":
+        return get_staff_from_district(result)
+
+    if types[0]=="查询 people 操作 日志 历史"or types[0]=="查询 people time 操作 日志 历史":
+        return get_user_operation_log(result)
+
+    if types[0]=="查询 people 历史 工单" or types[0]=="查询 people time 历史 工单":
+        return get_work_orders(result)
+    if types[0]=="查询 position 报警" or types[0]=="查询 position time 报警":
+        return get_warning(result)
+    if types[0]=="查询 position 设备":
+        return get_devices_by_parents_name(result)
+    if types[0]=="查询 people 通知":
+        return get_received_messages(result)
 
 def get_order_relations(result):
+    print result
     rstr=""
     for x in result['message']:
         rstr+="设备编号:"
@@ -947,15 +987,38 @@ def get_drill_plan(result):
                 rstr+=insidex['description'][step]
     return rstr
 
-
-
-
 def get_stations_name(result):
     rstr=""
     for x in result['response']:
         rstr+=x
         rstr+='\n'
     return rstr
+
+def get_operation_logs(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="日期:"
+        rstr+=x['timestamp']
+        rstr+='\n'
+        rstr+="处理人:"
+        rstr+=x['operator']
+        rstr+='\n'
+        rstr+="操作信息:"
+        if x['operations']!=[]:
+            rstr+=x['operations'][0]['from'][0]['area']+'-'+x['operations'][0]['from'][0]['station']+'-'+x['operations'][0]['from'][0]['device_name']+'-'+x['operations'][0]['from'][0]['title']
+        rstr+='\n'
+        rstr+="操作结果:"
+        rstr+=x['is_all_success']
+        rstr+='\n\n'
+    return rstr
+
+def get_devices_by_parents_name(result):
+    rstr="设备名称:\n"
+    for x in result['response']:
+        rstr+=x['name']
+        rstr+='\n'
+    return rstr
+
 
 def get_children_with_warning_count(result):
     rstr=""
@@ -969,6 +1032,7 @@ def get_children_with_warning_count(result):
         rstr+='\n严重报警:'
         rstr+=str(x['warning_counts'][0])
         rstr+="\n\n"
+
     return rstr
 
 
@@ -995,6 +1059,7 @@ def get_staff_from_district(result):
     return rstr
 
 def get_received_messages(result):
+    print result
     rstr=""
     for x in result['response']:
         rstr+="发件人:"
@@ -1048,20 +1113,56 @@ def get_work_orders(result):
         rstr+='\n\n'
     return rstr
 
+def get_point_info_with_real_time(result):
+    rstr=""
+    x=result['response']
+    rstr+="区域:"
+    rstr+=x['point']['area']
+    rstr+="\n"
+    rstr+="设备:"
+    rstr+=x['point']['device_name']
+    rstr+="\n"
+    rstr+="监测点:"
+    rstr+=x['point']['name']
+    rstr+="\n"
+    rstr+="时间:"
+    rstr+=x['point_real_time']['time']
+    rstr+="\n"
+    rstr+="数值:"
+    rstr=rstr+str(x['point_real_time']['value'])+x['point']['units']
+    rstr+="\n"
+    rstr+="状态:"
+    rstr+=x['point']['warning_type']
+    rstr+="\n"
+    rstr+="\n\n"
+
+    return rstr
+
+def get_warning(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="位置:"
+        rstr=rstr+x['Local_Network']+x['Area']+'-'+x['Station']+'-'+x['Device']
+        rstr+='\n'
+        rstr+="监控点:"
+        rstr+=x['Point']
+        rstr+='\n'
+        rstr+="数值:"
+        rstr=rstr+str(x['Value'])+x['Units']
+        rstr+='\n'
+        rstr+="开始时间:"
+        rstr+=x['Start_Time']
+        rstr+='\n'
+        rstr+="类型:"
+        rstr+=x['Warning_Type']
+        rstr+='\n'
+        rstr+="状态:"
+        rstr+=x['Status']
+        rstr+='\n\n'
+
+    return rstr
 
 
-
-        
-
-        
-
-
-
-
-
-
-
-        
 
 
 
@@ -1120,6 +1221,7 @@ def test():
     paraDict = paraFilter(st)
     date = parseDate(sentence)
     ftype=0
+    remember=[]
 
     # print stations
     # print paraDict
@@ -1137,16 +1239,14 @@ def test():
 
     pointResult=pointquery(divideResult,points,devices,stations,para)
     if pointResult!=0:
-        print pointResult
+        print get_point_info_with_real_time(json.loads(pointResult))
     elif sentenceResult == 0:
         print ""
         print connectTuring(sentence)
     else:
         if date!=0:
             sentenceResult.append('time')
-
         hitResult = getPrefixHit(sentenceResult, st)  # dict
-
         rankResult = ranking(hitResult, sentenceResult)  # dict
         rerankingResult = revranking(hitResult)
         if date!=0:
@@ -1160,12 +1260,12 @@ def test():
             st,
             para,
             paraDict,
-            sentenceResult)
+            sentenceResult,remember)
         if excuteResult==0:
             print connectTuring(sentence)
         # b=filt(a,'v')
         else:
-            print ""
-            print get_work_orders(json.loads(excuteResult))
+            print " "
+            print showResult(json.loads(excuteResult),remember[0])
 test()
 
