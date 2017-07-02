@@ -19,7 +19,7 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询设备类型"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询余文乐的工单"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
@@ -763,16 +763,23 @@ def excuteREST(p, rp, st, para, paraDict, qType):
 
 
 def getResult(url):
+    print url
     turl = '../wendata/token'
     fin1 = open(turl, 'r+')
     token = fin1.read()
     url = 'http://www.intellense.com:3080' + url
     # print url
+    fin1.close()
 
     req = urllib2.Request(url)
     req.add_header('authorization', token)
-    response = urllib2.urlopen(req)
-    fin1.close()
+    try:
+        response = urllib2.urlopen(req)
+    except Exception as e:
+        return 0
+
+    
+
     # print response.read()
     print url
     return response.read()
@@ -885,6 +892,173 @@ def get_device_type(result):
         rstr+='\n'
     return rstr
 
+def monitoring_manage_get_devices(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="设备ID:"
+        rstr+=x['ID']
+        rstr+='\n'
+        rstr+="设备类型:"
+        rstr+=x['device_type']
+        rstr+='\n'
+        rstr+="设备名称:"
+        rstr+=x['name']
+        rstr+='\n'
+        rstr+="设备位置:"
+        for y in x['parents'].values():
+            rstr+=y
+            rstr+=" "
+        rstr+='\n\n'
+    return rstr
+
+def get_point_types(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="采集点名称:"
+        rstr+=x['name']
+        rstr+='\n'
+    return rstr
+
+def get_drill_plan(result):
+    rstr=""
+    for x in result['message']:
+        for y in x['plans']:
+            url="/preplans/get_plan_by_id?plan_id="+y
+            plan=getResult(url)
+            plan=json.loads(plan)
+            # print plan['message']
+            insidex=plan['message']
+            # print insidex
+            rstr+="演练名称:"
+            rstr+=insidex['name']
+            rstr+="\n演练时间:"
+            rstr+=insidex['time']
+            rstr+="\n演练地点:"
+            rstr+=insidex['location']
+            rstr+="\n实施人员:"
+            rstr+=insidex['operator']
+            rstr+="\n联系电话:"
+            rstr+=insidex['phone']
+            rstr+="\n参演人员:"
+            rstr+=insidex['operator']
+            rstr+="\n演练步骤:"
+            for step in range(len(insidex['description'])):
+                rstr+="\n步骤"+str(step+1)+':'
+                rstr+=insidex['description'][step]
+    return rstr
+
+
+
+
+def get_stations_name(result):
+    rstr=""
+    for x in result['response']:
+        rstr+=x
+        rstr+='\n'
+    return rstr
+
+def get_children_with_warning_count(result):
+    rstr=""
+    for x in result['response']:
+        rstr+='名字:'
+        rstr+=x['name']
+        rstr+='\n一般报警:'
+        rstr+=str(x['warning_counts'][2])
+        rstr+='\n紧急报警:'
+        rstr+=str(x['warning_counts'][1])
+        rstr+='\n严重报警:'
+        rstr+=str(x['warning_counts'][0])
+        rstr+="\n\n"
+    return rstr
+
+
+def get_staff_from_district(result):
+    rstr=""
+    for x in result["response"]:
+        rstr+="姓名:"
+        rstr+=x['name']
+        rstr+="\n性别:"
+        rstr+=x['gender']
+        rstr+="\n电话:"
+        rstr+=x['cellphone']
+        rstr+="\n电邮:"
+        rstr+=x['email']
+        rstr+="\n公司:"
+        rstr+=x['company']
+        rstr+="\n类型:"
+        rstr+=x['type']
+        rstr+="\n区域:"
+        rstr+=x['district']['name']
+        rstr+="\n资格认证:"
+        for y in x['qualification']:
+            rstr+=y['name']
+    return rstr
+
+def get_received_messages(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="发件人:"
+        rstr+=x['sender']
+        rstr+='\n'
+        rstr+="时间:"
+        rstr+=x['timestamp']
+        rstr+='\n'
+        rstr+="标题:"
+        rstr+=x['title']
+        rstr+='\n'
+        rstr+="内容:"
+        rstr+=x['content']
+        rstr+='\n\n'
+    return rstr
+
+def get_user_operation_log(result):
+    rstr=""
+    for x in result['response']:
+        rstr+="操作人员:"
+        for y in x['foreign1']:
+            rstr+=y['name']
+            rstr+=" "
+        rstr+="\n权限:"
+        for y in x['foreign2']:
+            rstr+=y['name']
+            rstr+=" "
+        rstr+='\n操作内容:'
+        rstr+=x['operation']
+        rstr+='\n操作时间:'
+        rstr+=x['timestamp']
+        rstr+='\n\n'
+    return rstr
+
+def get_work_orders(result):
+    status={'0':'已发送','1':'已确认','2':'已处理','3':'已完成'}
+    rstr=""
+    for x in result['response']:
+        rstr+="工单编号:"
+        rstr+=str(x['ID'])
+        rstr+="\n处理人:"
+        rstr+=x['worker_name']
+        rstr+="\n地点:"
+        rstr=rstr+x['event_detail']['Local_Network']+"-"+x['event_detail']['Area']+'-'+x['event_detail']['Local_Network']+x['event_detail']['Station']
+        rstr+="\n产生时间:"
+        rstr+=x['event_detail']['Start_Time']
+        rstr+="\n工单内容:"
+        rstr=rstr+x['event_detail']['Device']+'-'+x['event_detail']['Point']+'-'+x['event_detail']['Warning_Type']
+        rstr+="\n当前状态:"
+        rstr+=status[str(x['status']['current_status'])]
+        rstr+='\n\n'
+    return rstr
+
+
+
+
+        
+
+        
+
+
+
+
+
 
 
         
@@ -992,6 +1166,6 @@ def test():
         # b=filt(a,'v')
         else:
             print ""
-            print get_device_type(json.loads(excuteResult))
+            print get_work_orders(json.loads(excuteResult))
 test()
 
