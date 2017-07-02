@@ -19,10 +19,13 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询2017年杭州市的报警"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查城市"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
+    '''
+    把常规说法换成日期区间
+    '''
     preDate = getDate()
     words = []
     timeList = []
@@ -92,35 +95,7 @@ def parseCountExpressionDate(SENTENCE,TIMELIST,TAG,YEAROFMONTH):
             yearOfMonth.append(str(numbers.tm_hour))
     return [timeList,tag,yearOfMonth,sentence]
 
-
-def parseDate(sentence):
-    word = None
-    timeList = []
-    tag = []
-    yearOfMonth = []
-    today = datetime.date.today()
-    today = str(today).split('-')
-    yearOfMonth = today
-    other=False
-    # print yearOfMonth
-    needRerange=False
-    timeList=parseCommonExpressionDate(sentence)[0]
-    tag=parseCommonExpressionDate(sentence)[1]
-    yearOfMonth=parseCommonExpressionDate(sentence)[2]
-    pced=parseCountExpressionDate(sentence,timeList,tag,yearOfMonth)
-    timeList.extend(pced[0])
-    tag.extend(pced[1])
-    yearOfMonth=pced[2]
-    sentence=pced[3]
-
-    # 用户输入时间转成系统时间
-
-    #年月日时
-    # print "--------年月日时--------"
-    # isValid=acceptDate(sentence)
-    # print isValid
-    # if not isValid:
-    #     return 0
+def toYMDH(sentence,timeList,tag,yearOfMonth):
     match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence)
     # print match
     if match != []:
@@ -135,17 +110,14 @@ def parseDate(sentence):
                 yearOfMonth[2]=match[x][2]
                 yearOfMonth.append(match[x][3])
                 tag.append("ymdh")
-            else:
-                return 'timeError'
 
-    sentence1 = re.sub(
+    return re.sub(
         r'(\d{4})年(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]',
         "",
         sentence)
 
-    #年月日
-    # print "--------年月日--------"
-    match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence1)
+def toYMD(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{4})年(\d{1,2})月(\d{1,2})日', sentence)
     # print match
     if match != []:
         for x in range(len(match)):
@@ -160,12 +132,10 @@ def parseDate(sentence):
                 yearOfMonth[2]=match[x][2]
                 tag.append("ymd")
 
-    sentence2 = re.sub(r'(\d{4})年(\d{1,2})月(\d{1,2})日', "", sentence1)
+    return re.sub(r'(\d{4})年(\d{1,2})月(\d{1,2})日', "", sentence)
 
-
-    # 月日时
-    # print "--------月日时--------"
-    match = re.findall(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence2)
+def toMDH(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', sentence)
     if match != []:
         if len(timeList)==1:
             tempStartTime = yearOfMonth[0] + '-' + match[x][0] + '-' + match[x][1] + " " + match[x][2] + ":00:00"
@@ -195,13 +165,11 @@ def parseDate(sentence):
                 yearOfMonth[2] = match[x][1]
                 yearOfMonth.append(match[x][2])
                 tag.append("mdh")
+    return re.sub(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', "", sentence)
 
-    sentence3 = re.sub(r'(\d{1,2})月(\d{1,2})日(\d{1,2})[点|时]', "", sentence2)
 
-
-    # 月日
-    # print "--------月日--------"
-    match = re.findall(r'(\d{1,2})月(\d{1,2})日', sentence3)
+def toMD(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})月(\d{1,2})日', sentence)
 
     # print match
     if match != []:
@@ -231,10 +199,11 @@ def parseDate(sentence):
                     yearOfMonth[2] = match[x][1]
                     tag.append( "md")
 
-    sentence4 = re.sub(r'(\d{1,2})月(\d{1,2})日', "", sentence3)
-    # 日时
-    # print "--------日时--------"
-    match = re.findall(r'(\d{1,2})日(\d{1,2})[点|时]', sentence4)
+    return re.sub(r'(\d{1,2})月(\d{1,2})日', "", sentence)
+
+
+def toDH(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})日(\d{1,2})[点|时]', sentence)
     # print match
 
     if match != []:
@@ -269,11 +238,11 @@ def parseDate(sentence):
                     tag.append("dh")
 
 
-    sentence5 = re.sub(r'(\d{1,2})日(\d{1,2})[点|时]', "", sentence4)
+    return re.sub(r'(\d{1,2})日(\d{1,2})[点|时]', "", sentence)
 
-    # 年月
-    # print "--------年月--------"
-    match = re.findall(r'(\d{4})年(\d{1,2})月', sentence5)
+
+def toYM(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{4})年(\d{1,2})月', sentence)
     # print match
     if match != []:
         for x in range(len(match)):
@@ -289,12 +258,10 @@ def parseDate(sentence):
                 yearOfMonth[1] = match[x][1]
                 tag.append("ym")
 
+    return re.sub(r'(\d{4})年(\d{1,2})月', "", sentence)
 
-    sentence6 = re.sub(r'(\d{4})年(\d{1,2})月', "", sentence5)
-
-    # 年
-    # print "--------年--------"
-    match = re.findall(r'(\d{4})年', sentence6)
+def toY(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{4})年', sentence)
     # print match
     if match != []:
         for x in range(len(match)):
@@ -306,11 +273,10 @@ def parseDate(sentence):
                 yearOfMonth[0] = match[0]
                 tag.append("y")
 
-    sentence7 = re.sub(r'(\d{4})年', "", sentence6)
+    return re.sub(r'(\d{4})年', "", sentence)
 
-    # 月
-    # print "--------月--------"
-    match = re.findall(r'(\d{1,2})月', sentence7)
+def toM(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})月', sentence)
     # print match
     if match != []:
         if len(timeList) == 1 :
@@ -340,13 +306,10 @@ def parseDate(sentence):
                     yearOfMonth[1] = match[0]
                     # yearOfMonth[1]=match[0]
                     tag.append("m")
+    return re.sub(r'(\d{1,2})月', "", sentence)
 
-
-    sentence8 = re.sub(r'(\d{1,2})月', "", sentence7)
-
-    # 日
-    # print "--------日--------"
-    match = re.findall(r'(\d{1,2})日', sentence8)
+def toD(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})日', sentence)
     # print match
     if match != []:
         for x in range(len(match)):
@@ -360,11 +323,10 @@ def parseDate(sentence):
                 tag.append("d")
 
 
-    sentence9 = re.sub(r'(\d{1,2})日', "", sentence8)
+    return re.sub(r'(\d{1,2})日', "", sentence)
 
-    # 时
-    # print "--------时--------"
-    match = re.findall(r'(\d{1,2})[点|时]', sentence9)
+def toH(sentence,timeList,tag,yearOfMonth):
+    match = re.findall(r'(\d{1,2})[点|时]', sentence)
     # print match
     if match != []:
         for x in range(len(match)):
@@ -374,6 +336,71 @@ def parseDate(sentence):
                 # startTime=tempStartTime+'Z'
                 timeList.append(tempStartTime)
                 tag.append("h")
+
+def parseDate(sentence):
+    word = None
+    timeList = []
+    tag = []
+    yearOfMonth = []
+    today = datetime.date.today()
+    today = str(today).split('-')
+    yearOfMonth = today
+    other=False
+    # print yearOfMonth
+    needRerange=False
+    timeList=parseCommonExpressionDate(sentence)[0]
+    tag=parseCommonExpressionDate(sentence)[1]
+    yearOfMonth=parseCommonExpressionDate(sentence)[2]
+    pced=parseCountExpressionDate(sentence,timeList,tag,yearOfMonth)
+    timeList.extend(pced[0])
+    tag.extend(pced[1])
+    yearOfMonth=pced[2]
+    sentence=pced[3]
+
+    # 用户输入时间转成系统时间
+
+    #年月日时
+    # print "--------年月日时--------"
+
+    sentence1=toYMDH(sentence,timeList,tag,yearOfMonth)
+
+    #年月日
+    # print "--------年月日--------"
+    
+    sentence2=toYMD(sentence1,timeList,tag,yearOfMonth)
+
+    # 月日时
+    # print "--------月日时--------"
+    sentence3=toMDH(sentence2,timeList,tag,yearOfMonth)
+    
+
+
+    # 月日
+    # print "--------月日--------"
+    sentence4=toMDH(sentence3,timeList,tag,yearOfMonth)
+    # 日时
+    # print "--------日时--------"
+    sentence5=toDH(sentence4,timeList,tag,yearOfMonth)
+
+    # 年月
+    # print "--------年月--------"
+    
+    sentence6=toYM(sentence5,timeList,tag,yearOfMonth)
+    # 年
+    # print "--------年--------"
+    
+    sentence7=toY(sentence6,timeList,tag,yearOfMonth)
+    # 月
+    # print "--------月--------"
+    sentence8=toM(sentence7,timeList,tag,yearOfMonth)
+
+    # 日
+    # print "--------日--------"
+    sentence9=toD(sentence8,timeList,tag,yearOfMonth)
+
+    # 时
+    # print "--------时--------"
+    toH(sentence9,timeList,tag,yearOfMonth)
     # print timeList 
     if len(timeList)==0:
         return 0
@@ -421,7 +448,6 @@ def findMin(l,tag):
             mini=l[x]
             t=tag[x]
     return [mini,t]
-
 
 def findMax(l,tag):
     maxi=l[0]
@@ -770,7 +796,7 @@ def getResult(url):
     fin1 = open(turl, 'r+')
     token = fin1.read()
     url = 'http://www.intellense.com:3080' + url
-    print url
+    # print url
     fin1.close()
 
     req = urllib2.Request(url)
@@ -779,8 +805,6 @@ def getResult(url):
         response = urllib2.urlopen(req)
     except Exception as e:
         return 0
-
-    
 
     # print response.read()
     print url
@@ -1241,7 +1265,6 @@ def test():
     if pointResult!=0:
         print get_point_info_with_real_time(json.loads(pointResult))
     elif sentenceResult == 0:
-        print ""
         print connectTuring(sentence)
     else:
         if date!=0:
@@ -1265,7 +1288,12 @@ def test():
             print connectTuring(sentence)
         # b=filt(a,'v')
         else:
-            print " "
-            print showResult(json.loads(excuteResult),remember[0])
+            reinfo=showResult(json.loads(excuteResult),remember[0])
+            if reinfo=="":
+                print '没有相关数据信息'
+            else:
+                print reinfo
+
+
 test()
 

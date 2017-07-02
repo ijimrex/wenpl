@@ -2,18 +2,17 @@
 {"查询 全部 设备 类型":"/get_device_type"}
 {"查询 全部 设备":"/monitoring_manage/get_devices"}
 {"查询 全部 采集点":"/get_point_types?page=1&limit=50"}
-{"查询 全部 设备类型 采集点 关系":"/get_d_p_relations?page=1&limit=10"}
 {"查询 全部 应急 演练 预案":"/preplans/get_drill_plan"}
-{"查询 全部 设备 类型":"/get_device_types"}
 {"查询 局站 名称" : "/monitoring_manage/get_stations_name"}
 {"查询 全部 操作 日志":"/point_management/get_operation_logs"}
-{"查询 position 基础":"/elements/get_children?parent_name="}
-{"查询 position 报警":"/warnings/get_children_with_warning_count?parent_name="}
+{"查询 position 报警 数量":"/warnings/get_children_with_warning_count?parent_name="}
 {"查询 position 员工":"/staff/get_staff_from_district?district="}
-{"查询 name 通知":"/message/get_message_statistics?current_page=1&page_limit=20&&keyword="}
-{"查询 name time 历史 工单":["/work_order/get_work_orders?page=1&&limit=10&&keyWord=","&&startDate=","&&endDate="]}
-{"查询 time 操作 日志 历史":["http://www.intellense.com:3080/get_user_operation_log?current_page=1&&page_limit=50&&keyword=","&&start=","&&end="]}
+{"查询 people 操作 日志 历史":"/get_user_operation_log?current_page=1&&page_limit=10&&keyword="}
+{"查询 people 历史 工单":"/work_order/get_work_orders?page=1&&limit=10&&keyWord="}
+{"查询 position 报警":"/reports/gen_report/warnings?parent_name="}
+{"查询 people time 历史 工单":["/work_order/get_work_orders?page=1&&limit=10&&keyWord=","&&startDate=","&&endDate="]}
+{"查询 people time 操作 日志 历史":["/get_user_operation_log?current_page=1&&page_limit=10&&keyword=","&&start=","&&end="]}
 {"查询 position 设备" : "/monitoring_manage/get_devices_by_parents_name?parent_name="}
-{"查询 name 已读 通知":"/message/get_received_messages?&&keyword=&&start=&&end=&&current_page=1&&is_read=1&&user="}
-{"查询 name 未读 通知":"/message/get_received_messages?&&keyword=&&start=&&end=&&current_page=1&&is_read=0&&user="}
+{"查询 people 通知":"/message/get_received_messages?&&keyword=&&start=&&end=&&current_page=1&&user="}
 {"查询 position time 报警":["/reports/gen_report/warnings?parent_name=","&start=","&end="]}
+{"查询 实时 stations devices points":["/data/point_info_with_real_time?station_name=","&device_name=","&point_name="]}
