@@ -19,7 +19,7 @@ jieba.load_userdict('../wendata/dict/dict2.txt')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-sentence = "查询到现在的余文乐的操作记录"  # todo：需要预处理一下，去掉空格和无意义符号
+sentence = "查询设备类型"  # todo：需要预处理一下，去掉空格和无意义符号
 sentence = sentence.replace(' ', '')
 
 def parseCommonExpressionDate(sentence):
@@ -94,7 +94,6 @@ def parseCountExpressionDate(SENTENCE,TIMELIST,TAG,YEAROFMONTH):
 
 
 def parseDate(sentence):
-
     word = None
     timeList = []
     tag = []
@@ -375,7 +374,7 @@ def parseDate(sentence):
                 # startTime=tempStartTime+'Z'
                 timeList.append(tempStartTime)
                 tag.append("h")
-    print timeList 
+    # print timeList 
     if len(timeList)==0:
         return 0
     return normalizeDate(operatetimeList(timeList,tag))
@@ -395,6 +394,7 @@ def parseDate(sentence):
 
 
     # if
+
 def acceptDate(sentence):
     print sentence
     match=[]
@@ -406,9 +406,6 @@ def acceptDate(sentence):
         if x!=None:
             return False
     return True
-
-
-
 
 def compDate(l1,l2):
     c1=((l1.year*100+l1.month)*100+l1.day)*100+l1.hour
@@ -437,11 +434,11 @@ def findMax(l,tag):
 
 def conDate(y,m,d,h,mi,s):
     return str(y)+'-'+str(m)+'-'+str(d)+' '+str(h)+':'+str(mi)+':'+str(s)
-
 def normalizeDate(l):
     returnList=[]
     for x in l:
-        returnList.append(x+'.0Z')
+        half=x.split(' ')[0]
+        returnList.append(half+'%2002:42:12.134Z')
     return returnList
 
 def operatetimeList(timeList,tag):
@@ -499,7 +496,6 @@ def operatetimeList(timeList,tag):
             elif tag[0]=='ymdh' or tag[0]=='mdh' or tag[0]=='dh' or tag[0]=='h':
                 returnList.append(conDate(timecheck[0].year,timecheck[0].month,timecheck[0].day,timecheck[0].hour,59,59))
     return returnList
-
 
 
 def getDate():
@@ -595,6 +591,14 @@ def getPeople():
     return people
 
 
+def getDict(url):
+    try:
+        data = open(url, "r+").read()
+        # print data
+        return data
+    except Exception as e:
+        print e
+
 def divide(str):
     # return the unicode format result
     words = pseg.cut(str)
@@ -675,10 +679,6 @@ def pointquery(li,points,devices,stations,para):
         return 0
 
         
-     
-
-
-
 def getPrefixHit(qType, store):
     # calculate the hit times of each prefix sentences in store
     count = {}
@@ -718,10 +718,7 @@ def revranking(count):
 
 
 def excuteREST(p, rp, st, para, paraDict, qType):
-    """
-    :param p:
-    :
-    """
+
     # p:正排序后的store匹配度列表
     # rp:反排序后的store匹配度列表
     # st:store字典
@@ -731,8 +728,9 @@ def excuteREST(p, rp, st, para, paraDict, qType):
     # p[[[],[]],[]]
     # st{:}
     p = resort(p, rp)
-    # print para
+    # print p
     writeData(p)
+    url=""
     if len(para) == 0:
         for x in p:
             if len(paraDict[x[0]]) == 0:
@@ -742,15 +740,20 @@ def excuteREST(p, rp, st, para, paraDict, qType):
         for x in p:
             if len(paraDict[x[0]]) == 1:
                 # print paraDict[x[0]][0][0]
-                # print qType
                 if qType.count(paraDict[x[0]][0][0]) == 1:
                     url = st[x[0]] + para[0]
                     break
+        if url=="":
+            return 0
+
     elif len(para) == 2:
         for x in p:
             if len(paraDict[x[0]]) == 2:
                 url = st[x[0]][0] + para[0] + st[x[0]][1] + para[1][0]+st[x[0]][2]+para[1][1]
                 break
+        if url=="":
+            return 0
+
 
     # url=st[p[0][0]]
     # if len(para)!=0:
@@ -765,13 +768,14 @@ def getResult(url):
     token = fin1.read()
     url = 'http://www.intellense.com:3080' + url
     # print url
+
     req = urllib2.Request(url)
     req.add_header('authorization', token)
-    # response = urllib2.urlopen(req)
+    response = urllib2.urlopen(req)
     fin1.close()
     # print response.read()
-    return url
-    # return response.read()
+    print url
+    return response.read()
 
 
 def resort(l1, l2):
@@ -851,13 +855,41 @@ def connectTuring(a):
     return reson['text']
 
 
-def getDict(url):
-    try:
-        data = open(url, "r+").read()
-        # print data
-        return data
-    except Exception as e:
-        print e
+def showResult(result,type):
+    None
+
+def get_order_relations(result):
+    rstr=""
+    for x in result['message']:
+        rstr+="设备编号:"
+        rstr+=x['Device']
+        rstr+='\n'
+        rstr+="局站名称:"
+        rstr+=x['Station']
+        rstr+='\n'
+        rstr+='工作人员:'
+        rstr+='\n'
+        for worker in x['Worker_Id']:
+            rstr+=worker['name']
+            rstr+='\n工号:'
+            rstr+=worker['id']
+            rstr+='\n'
+        rstr+='\n\n'
+    return rstr
+
+def get_device_type(result):
+    print result
+    rstr=""
+    for x in result['response'].values():
+        rstr+=x
+        rstr+='\n'
+    return rstr
+
+
+
+        
+
+
 
 
 def toUTF8(origin):
@@ -913,6 +945,7 @@ def test():
     keyphrase = pro.keys()
     paraDict = paraFilter(st)
     date = parseDate(sentence)
+    ftype=0
 
     # print stations
     # print paraDict
@@ -954,8 +987,11 @@ def test():
             para,
             paraDict,
             sentenceResult)
+        if excuteResult==0:
+            print connectTuring(sentence)
         # b=filt(a,'v')
-        print ""
-        print excuteResult
+        else:
+            print ""
+            print get_device_type(json.loads(excuteResult))
 test()
 
